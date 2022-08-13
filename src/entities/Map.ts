@@ -1,8 +1,8 @@
-import Dungeoneer from "dungeoneer";
-import Tile, { TileType } from "./Tile";
-import Slime from "./Slime";
-import Graphics from "../assets/Graphics";
-import DungeonScene from "../scenes/DungeonScene";
+import Dungeoneer from 'dungeoneer';
+import Tile, { TileType } from './Tile';
+import Slime from './Slime';
+import Graphics from '../assets/Graphics';
+import DungeonScene from '../scenes/DungeonScene';
 
 export default class Map {
   public readonly tiles: Tile[][];
@@ -77,7 +77,7 @@ export default class Map {
     );
 
     this.groundLayer = this.tilemap
-      .createBlankLayer("Ground", dungeonTiles, 0, 0)
+      .createBlankLayer('Ground', dungeonTiles, 0, 0)
       .randomize(
         0,
         0,
@@ -117,10 +117,9 @@ export default class Map {
         );
       }
     }
-    this.tilemap.getLayer();
 
-    this.wallLayer = this.tilemap.createBlankLayer("Wall", dungeonTiles, 0, 0);
-    this.doorLayer = this.tilemap.createBlankLayer("Door", dungeonTiles, 0, 0);
+    this.wallLayer = this.tilemap.createBlankLayer('Wall', dungeonTiles, 0, 0);
+    this.doorLayer = this.tilemap.createBlankLayer('Door', dungeonTiles, 0, 0);
 
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
@@ -133,10 +132,12 @@ export default class Map {
       }
     }
     this.wallLayer.setCollisionBetween(0, 0x7f);
+
     const collidableDoors = [
       Graphics.environment.indices.doors.horizontal,
       Graphics.environment.indices.doors.vertical,
     ];
+
     this.doorLayer.setCollision(collidableDoors);
 
     this.doorLayer.setTileIndexCallback(

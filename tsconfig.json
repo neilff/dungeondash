@@ -3,7 +3,6 @@
     "target": "es2017",
     "module": "commonjs",
     "rootDir": "./src",
-
     "strict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -11,7 +10,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-
     "esModuleInterop": true
   }
 }
