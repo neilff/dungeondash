@@ -12,9 +12,9 @@ new Phaser.Game({
   physics: { default: "arcade", arcade: { debug: false, gravity: { y: 0 } } },
   scene: [DungeonScene, InfoScene, ReferenceScene],
   scale: {
-    mode: Phaser.Scale.RESIZE
-  }
-  // plugins: {
-  //   global: [{ key: "SceneWatcher", plugin: SceneWatcherPlugin, start: true }]
-  // }
+    mode: Phaser.Scale.RESIZE,
+  },
+  plugins: {
+    // global: [{ key: "SceneWatcher", plugin: SceneWatcherPlugin, start: true }],
+  },
 });

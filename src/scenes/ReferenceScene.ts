@@ -19,7 +19,7 @@ export default class ReferenceScene extends Phaser.Scene {
   }
 
   preload(): void {
-    tilesets.forEach(t => this.load.image(t.name, t.file));
+    tilesets.forEach((t) => this.load.image(t.name, t.file));
     this.load.bitmapFont("default", ...Fonts.default);
   }
 
@@ -54,10 +54,10 @@ export default class ReferenceScene extends Phaser.Scene {
 
     this.map = this.make.tilemap({
       tileWidth: tileset.width,
-      tileHeight: tileset.height
+      tileHeight: tileset.height,
     });
     const tiles = this.map.addTilesetImage(tileset.name);
-    const layer = this.map.createBlankDynamicLayer(
+    const layer = this.map.createBlankLayer(
       "preview",
       tiles,
       30,

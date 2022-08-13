@@ -39,7 +39,7 @@ export default class FOVLayer {
     const utilTiles = map.tilemap.addTilesetImage("util");
 
     this.layer = map.tilemap
-      .createBlankDynamicLayer("Dark", utilTiles, 0, 0)
+      .createBlankLayer("Dark", utilTiles, 0, 0)
       .fill(Graphics.util.indices.black);
     this.layer.setDepth(100);
 

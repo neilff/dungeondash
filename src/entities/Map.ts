@@ -9,8 +9,9 @@ export default class Map {
   public readonly width: number;
   public readonly height: number;
   public readonly tilemap: Phaser.Tilemaps.Tilemap;
-  public readonly wallLayer: Phaser.Tilemaps.StaticTilemapLayer;
-  public readonly doorLayer: Phaser.Tilemaps.DynamicTilemapLayer;
+  public readonly groundLayer: Phaser.Tilemaps.TilemapLayer;
+  public readonly wallLayer: Phaser.Tilemaps.TilemapLayer;
+  public readonly doorLayer: Phaser.Tilemaps.TilemapLayer;
 
   public readonly startingX: number;
   public readonly startingY: number;
@@ -22,7 +23,7 @@ export default class Map {
   constructor(width: number, height: number, scene: DungeonScene) {
     const dungeon = Dungeoneer.build({
       width: width,
-      height: height
+      height: height,
     });
     this.rooms = dungeon.rooms;
 
@@ -48,13 +49,14 @@ export default class Map {
       }
     }
 
-    toReset.forEach(d => {
+    toReset.forEach((d) => {
       this.tiles[d.y][d.x] = new Tile(TileType.None, d.x, d.y, this);
     });
 
     const roomNumber = Math.floor(Math.random() * dungeon.rooms.length);
 
     const firstRoom = dungeon.rooms[roomNumber];
+
     this.startingX = Math.floor(firstRoom.x + firstRoom.width / 2);
     this.startingY = Math.floor(firstRoom.y + firstRoom.height / 2);
 
@@ -62,7 +64,7 @@ export default class Map {
       tileWidth: Graphics.environment.width,
       tileHeight: Graphics.environment.height,
       width: width,
-      height: height
+      height: height,
     });
 
     const dungeonTiles = this.tilemap.addTilesetImage(
@@ -74,8 +76,8 @@ export default class Map {
       Graphics.environment.spacing
     );
 
-    const groundLayer = this.tilemap
-      .createBlankDynamicLayer("Ground", dungeonTiles, 0, 0)
+    this.groundLayer = this.tilemap
+      .createBlankLayer("Ground", dungeonTiles, 0, 0)
       .randomize(
         0,
         0,
@@ -87,7 +89,7 @@ export default class Map {
     this.slimes = [];
 
     for (let room of dungeon.rooms) {
-      groundLayer.randomize(
+      this.groundLayer.randomize(
         room.x - 1,
         room.y - 1,
         room.width + 2,
@@ -115,36 +117,25 @@ export default class Map {
         );
       }
     }
-    this.tilemap.convertLayerToStatic(groundLayer).setDepth(1);
+    this.tilemap.getLayer();
 
-    const wallLayer = this.tilemap.createBlankDynamicLayer(
-      "Wall",
-      dungeonTiles,
-      0,
-      0
-    );
-
-    this.doorLayer = this.tilemap.createBlankDynamicLayer(
-      "Door",
-      dungeonTiles,
-      0,
-      0
-    );
+    this.wallLayer = this.tilemap.createBlankLayer("Wall", dungeonTiles, 0, 0);
+    this.doorLayer = this.tilemap.createBlankLayer("Door", dungeonTiles, 0, 0);
 
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const tile = this.tiles[y][x];
         if (tile.type === TileType.Wall) {
-          wallLayer.putTileAt(tile.spriteIndex(), x, y);
+          this.wallLayer.putTileAt(tile.spriteIndex(), x, y);
         } else if (tile.type === TileType.Door) {
           this.doorLayer.putTileAt(tile.spriteIndex(), x, y);
         }
       }
     }
-    wallLayer.setCollisionBetween(0, 0x7f);
+    this.wallLayer.setCollisionBetween(0, 0x7f);
     const collidableDoors = [
       Graphics.environment.indices.doors.horizontal,
-      Graphics.environment.indices.doors.vertical
+      Graphics.environment.indices.doors.vertical,
     ];
     this.doorLayer.setCollision(collidableDoors);
 
@@ -161,10 +152,10 @@ export default class Map {
       },
       this
     );
-    this.doorLayer.setDepth(3);
 
-    this.wallLayer = this.tilemap.convertLayerToStatic(wallLayer);
+    this.groundLayer.setDepth(1);
     this.wallLayer.setDepth(2);
+    this.doorLayer.setDepth(3);
   }
 
   tileAt(x: number, y: number): Tile | null {
@@ -176,7 +167,7 @@ export default class Map {
 
   withinRoom(x: number, y: number): boolean {
     return (
-      this.rooms.find(r => {
+      this.rooms.find((r) => {
         const { top, left, right, bottom } = r.getBoundingBox();
         return (
           y >= top - 1 && y <= bottom + 1 && x >= left - 1 && x <= right + 1
