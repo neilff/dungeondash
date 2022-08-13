@@ -1,4 +1,9 @@
 node_modules
-.cache
-dist
 .DS_Store
+
+# Build files
+dist
+
+# Parcel cache
+.cache
+.parcel-cache
