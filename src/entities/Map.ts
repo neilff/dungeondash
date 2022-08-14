@@ -6,6 +6,11 @@ import Graphics from '../assets/Graphics';
 import DungeonScene from '../scenes/DungeonScene';
 import Room from './Room';
 
+const chunk = (arr: Array<any>, size: number) =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+
 type MapOptions = {
   enableDebugMode: boolean;
 };
@@ -31,11 +36,11 @@ export default class Map {
     width: number,
     height: number,
     scene: DungeonScene,
-    options?: MapOptions
+    options: MapOptions
   ) {
     let dungeon = null;
 
-    if (options?.enableDebugMode) {
+    if (options.enableDebugMode) {
       type TileObject = {
         x: number;
         y: number;
@@ -77,7 +82,9 @@ export default class Map {
         rooms,
         tiles: staticTiles,
       };
-    } else {
+    }
+
+    if (!options.enableDebugMode) {
       dungeon = Dungeoneer.build({
         seed: 'cififdo-sugewoi',
         width: width,
@@ -148,9 +155,20 @@ export default class Map {
         Graphics.environment.indices.floor.outerCorridor
       );
 
-    this.powerups = [
-      new Powerup(this.startingX + 25, this.startingY + 25, scene),
-    ];
+    // TODO (neilff): This is a temporary workaround to render all powerups
+    // in the development environment. Add a proper solution for this.
+    const powerUpsArray = chunk(Object.keys(Graphics.items.indices), 5);
+
+    this.powerups = powerUpsArray.reduce((acc, row, rowIndex) => {
+      row.forEach((powerupType, colIndex) => {
+        const xValue = this.startingX + 100 + colIndex * 20;
+        const yValue = this.startingY + 100 + rowIndex * 20;
+
+        acc.push(new Powerup(powerupType, xValue, yValue, scene));
+      });
+
+      return acc;
+    }, []);
 
     this.slimes = [];
 

@@ -2,7 +2,6 @@ import RogueEnvironment from '../../assets/fongoose/RogueEnvironment16x16-extrud
 import RoguePlayer from '../../assets/fongoose/RoguePlayer_48x48.png';
 import RogueSlime from '../../assets/fongoose/RogueSlime32x32.png';
 import RogueItems from '../../assets/fongoose/RogueItems16x16.png';
-
 import Util from '../../assets/Util.png';
 
 type AnimConfig = {
@@ -163,6 +162,23 @@ const items = {
   width: 16,
   height: 16,
   file: RogueItems,
+  indices: {
+    goldKey: 0x00,
+    copperKey: 0x01,
+    healthPotion: 0x02,
+    staminaPotion: 0x03,
+    manaPotion: 0x04,
+    heart: 0x05,
+    steelRingMail: 0x08,
+    steelScaleMail: 0x09,
+    bronzeRingMail: 0x09,
+    steelSword: 0x10,
+    bronzeSwrod: 0x11,
+    steelSheild: 0x12,
+    bronzeSheild: 0x13,
+    bow: 0x14,
+    arrow: 0x15,
+  },
 };
 
 const util = {

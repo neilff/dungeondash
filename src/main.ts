@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import ReferenceScene from './scenes/ReferenceScene';
 import DungeonScene from './scenes/DungeonScene';
 import InfoScene from './scenes/InfoScene';
+import InterfaceScene from './scenes/InterfaceScene';
 import globalConfig from './config';
 // import SceneWatcherPlugin from "phaser-plugin-scene-watcher";
 
@@ -13,7 +14,7 @@ new Phaser.Game({
   height: window.innerHeight,
   render: { pixelArt: true },
   physics: { default: 'arcade', arcade: { debug: true, gravity: { y: 0 } } },
-  scene: [dungeonScene, InfoScene, ReferenceScene],
+  scene: [dungeonScene, InfoScene, ReferenceScene, InterfaceScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
   },

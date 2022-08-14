@@ -9,6 +9,8 @@ import Powerup from '../entities/Powerup';
 const worldTileHeight = 25;
 const worldTileWidth = 25;
 
+const keyCodes = Phaser.Input.Keyboard.KeyCodes;
+
 export default class DungeonScene extends Phaser.Scene {
   lastX: number;
   lastY: number;
@@ -33,11 +35,14 @@ export default class DungeonScene extends Phaser.Scene {
       frameHeight: Graphics.slime.height,
       frameWidth: Graphics.slime.width,
     });
+    this.load.spritesheet(Graphics.items.name, Graphics.items.file, {
+      frameHeight: Graphics.items.height,
+      frameWidth: Graphics.items.width,
+    });
   }
 
   constructor(gameConfig: GameConfig) {
     super('DungeonScene');
-    console.log({ gameConfig });
     this.lastX = -1;
     this.lastY = -1;
     this.player = null;
@@ -75,14 +80,11 @@ export default class DungeonScene extends Phaser.Scene {
     targetSprite: Phaser.GameObjects.GameObject
   ) {
     const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
+    // TODO (neilff): Implement respawn when a user picks up an item
     targetPowerup?.consume();
   }
 
   create(): void {
-    this.events.on('wake', () => {
-      this.scene.run('InfoScene');
-    });
-
     Object.values(Graphics.player.animations).forEach((anim) => {
       if (!this.anims.get(anim.key)) {
         this.anims.create({
@@ -114,9 +116,7 @@ export default class DungeonScene extends Phaser.Scene {
 
     this.tilemap = map.tilemap;
 
-    if (this.enableDebugMode !== true) {
-      this.fov = new FOVLayer(map);
-    }
+    this.fov = new FOVLayer(map);
 
     this.player = new Player(
       this.tilemap.tileToWorldX(map.startingX),
@@ -171,32 +171,39 @@ export default class DungeonScene extends Phaser.Scene {
       this
     );
 
-    // for (let slime of this.slimes) {
-    //   this.physics.add.collider(slime.sprite, map.wallLayer);
-    // }
+    for (let slime of this.slimes) {
+      this.physics.add.collider(slime.sprite, map.wallLayer);
+    }
 
-    this.input.keyboard.on('keydown_R', () => {
-      this.scene.stop('InfoScene');
-      this.scene.run('ReferenceScene');
-      this.scene.sleep();
-    });
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.F)
+      .on('down', () => {
+        this.fov?.layer.setVisible(!this.fov?.layer.visible);
+      });
 
-    this.input.keyboard.on('keydown_Q', () => {
-      this.physics.world.drawDebug = !this.physics.world.drawDebug;
-      if (!this.physics.world.debugGraphic) {
-        this.physics.world.createDebugGraphic();
-      }
-      this.physics.world.debugGraphic.clear();
-      this.roomDebugGraphics!.setVisible(this.physics.world.drawDebug);
-    });
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.R)
+      .on('down', () => {
+        this.scene.stop('InfoScene');
+        this.scene.run('ReferenceScene');
+        this.scene.sleep();
+      });
 
-    this.input.keyboard.on('keydown_F', () => {
-      this.fov!.layer.setVisible(!this.fov!.layer.visible);
-    });
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.Q)
+      .on('down', () => {
+        this.physics.world.drawDebug = !this.physics.world.drawDebug;
+        if (!this.physics.world.debugGraphic) {
+          this.physics.world.createDebugGraphic();
+        }
+        this.physics.world.debugGraphic.clear();
+        this.roomDebugGraphics!.setVisible(this.physics.world.drawDebug);
+      });
 
     this.roomDebugGraphics = this.add.graphics({ x: 0, y: 0 });
     this.roomDebugGraphics.setVisible(false);
     this.roomDebugGraphics.lineStyle(2, 0xff5500, 0.5);
+
     for (let room of map.rooms) {
       this.roomDebugGraphics.strokeRect(
         this.tilemap!.tileToWorldX(room.x),
@@ -206,7 +213,7 @@ export default class DungeonScene extends Phaser.Scene {
       );
     }
 
-    this.scene.run('InfoScene');
+    this.scene.run('InterfaceScene');
   }
 
   update(time: number, delta: number) {
@@ -217,10 +224,6 @@ export default class DungeonScene extends Phaser.Scene {
     for (let slime of this.slimes) {
       slime.update(time);
     }
-
-    // for (let powerup of this.powerups) {
-    //   powerup.update(time);
-    // }
 
     const player = new Phaser.Math.Vector2({
       x: this.tilemap!.worldToTileX(this.player!.sprite.body.x),
@@ -234,8 +237,6 @@ export default class DungeonScene extends Phaser.Scene {
       this.tilemap!.worldToTileX(camera.worldView.height) + 2
     );
 
-    if (this.enableDebugMode !== true) {
-      this.fov!.update(player, bounds, delta);
-    }
+    this.fov!.update(player, bounds, delta);
   }
 }
