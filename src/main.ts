@@ -2,7 +2,10 @@ import Phaser from 'phaser';
 import ReferenceScene from './scenes/ReferenceScene';
 import DungeonScene from './scenes/DungeonScene';
 import InfoScene from './scenes/InfoScene';
+import globalConfig from './config';
 // import SceneWatcherPlugin from "phaser-plugin-scene-watcher";
+
+const dungeonScene = new DungeonScene(globalConfig);
 
 new Phaser.Game({
   type: Phaser.WEBGL,
@@ -10,7 +13,7 @@ new Phaser.Game({
   height: window.innerHeight,
   render: { pixelArt: true },
   physics: { default: 'arcade', arcade: { debug: true, gravity: { y: 0 } } },
-  scene: [DungeonScene, InfoScene, ReferenceScene],
+  scene: [dungeonScene, InfoScene, ReferenceScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
   },

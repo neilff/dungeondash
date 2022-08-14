@@ -149,7 +149,7 @@ export default class Map {
       );
 
     this.powerups = [
-      new Powerup(this.startingX - 4, this.startingY - 4, scene),
+      new Powerup(this.startingX + 25, this.startingY + 25, scene),
     ];
 
     this.slimes = [];

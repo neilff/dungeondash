@@ -35,8 +35,9 @@ export default class DungeonScene extends Phaser.Scene {
     });
   }
 
-  constructor() {
+  constructor(gameConfig: GameConfig) {
     super('DungeonScene');
+    console.log({ gameConfig });
     this.lastX = -1;
     this.lastY = -1;
     this.player = null;
@@ -46,7 +47,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.slimeGroup = null;
     this.powerups = [];
     this.powerupGroup = null;
-    this.enableDebugMode = true;
+    this.enableDebugMode = Boolean(gameConfig.enableDebugMode);
   }
 
   slimePlayerCollide(
@@ -74,7 +75,7 @@ export default class DungeonScene extends Phaser.Scene {
     targetSprite: Phaser.GameObjects.GameObject
   ) {
     const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
-    console.log('powerupPlayerCollide', targetPowerup);
+    targetPowerup?.consume();
   }
 
   create(): void {
@@ -108,7 +109,7 @@ export default class DungeonScene extends Phaser.Scene {
     });
 
     const map = new Map(worldTileWidth, worldTileHeight, this, {
-      enableDebugMode: true,
+      enableDebugMode: this.enableDebugMode,
     });
 
     this.tilemap = map.tilemap;
@@ -127,7 +128,6 @@ export default class DungeonScene extends Phaser.Scene {
     this.slimeGroup = this.physics.add.group(this.slimes.map((s) => s.sprite));
 
     this.powerups = map.powerups;
-    console.log(this.powerups);
     this.powerupGroup = this.physics.add.group(
       this.powerups.map((p) => p.sprite)
     );
