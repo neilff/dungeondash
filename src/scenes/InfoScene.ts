@@ -1,20 +1,20 @@
-import Phaser from "phaser";
-import Fonts from "../assets/Fonts";
+import Phaser from 'phaser';
+import Fonts from '../assets/Fonts';
 
 export default class InfoScene extends Phaser.Scene {
   text?: Phaser.GameObjects.DynamicBitmapText;
   lastUpdate?: number;
 
   constructor() {
-    super({ key: "InfoScene" });
+    super({ key: 'InfoScene' });
   }
 
   preload(): void {
-    this.load.bitmapFont("default", ...Fonts.default);
+    this.load.bitmapFont('default', ...Fonts.default);
   }
 
   create(): void {
-    this.text = this.add.dynamicBitmapText(25, 25, "default", "", 12);
+    this.text = this.add.dynamicBitmapText(25, 25, 'default', '', 12);
     this.text.setAlpha(0.7);
     this.lastUpdate = 0;
   }
@@ -22,18 +22,22 @@ export default class InfoScene extends Phaser.Scene {
   update(time: number, _: number): void {
     if (time > this.lastUpdate! + 100) {
       this.text!.setText([
-        "Dungeon Dash!",
-        "",
-        "Use arrow keys to walk around the map!",
-        "Press space while moving to dash-attack!",
-        "(debug: Q, tilesets: R)",
-        "",
-        "Credits & more information at",
-        "https://github.com/mipearson/dungeondash",
-        "",
-        "FPS: " + Math.round(this.game.loop.actualFps)
+        'Dungeon Dash!',
+        '',
+        'Use arrow keys to walk around the map!',
+        'Press space while moving to dash-attack!',
+        '(debug: Q, tilesets: R)',
+        '',
+        'Credits & more information at',
+        'https://github.com/mipearson/dungeondash',
+        '',
+        'FPS: ' + Math.round(this.game.loop.actualFps),
       ]);
       this.lastUpdate = time;
+    }
+
+    if (time > 2500) {
+      this.text?.setAlpha(this.text!.alpha - 0.01);
     }
   }
 }

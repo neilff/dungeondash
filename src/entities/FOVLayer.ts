@@ -1,7 +1,7 @@
-import Graphics from "../assets/Graphics";
-import Map from "../entities/Map";
-import { Mrpas } from "mrpas";
-import Phaser from "phaser";
+import Graphics from '../assets/Graphics';
+import Map from '../entities/Map';
+import { Mrpas } from 'mrpas';
+import Phaser from 'phaser';
 
 const radius = 7;
 const fogAlpha = 0.8;
@@ -36,10 +36,10 @@ export default class FOVLayer {
   private map: Map;
 
   constructor(map: Map) {
-    const utilTiles = map.tilemap.addTilesetImage("util");
+    const utilTiles = map.tilemap.addTilesetImage('util');
 
     this.layer = map.tilemap
-      .createBlankLayer("Dark", utilTiles, 0, 0)
+      .createBlankLayer('Dark', utilTiles, 0, 0)
       .fill(Graphics.util.indices.black);
     this.layer.setDepth(100);
 

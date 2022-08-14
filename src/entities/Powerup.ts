@@ -3,7 +3,7 @@ import Graphics from '../assets/Graphics';
 
 const speed = 20;
 
-export default class Slime {
+export default class Powerup {
   public readonly sprite: Phaser.Physics.Arcade.Sprite;
   private readonly body: Phaser.Physics.Arcade.Body;
   private nextAction: number;
@@ -11,7 +11,7 @@ export default class Slime {
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.sprite = scene.physics.add.sprite(x, y, Graphics.slime.name, 0);
     this.sprite.setSize(12, 10);
-    this.sprite.setOffset(10, 14);
+    this.sprite.setOffset(0, 0);
     this.sprite.anims.play(Graphics.slime.animations.idle.key);
     this.sprite.setDepth(10);
 

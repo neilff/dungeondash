@@ -1,12 +1,13 @@
-import Phaser from "phaser";
-import Graphics from "../assets/Graphics";
-import FOVLayer from "../entities/FOVLayer";
-import Player from "../entities/Player";
-import Slime from "../entities/Slime";
-import Map from "../entities/Map";
+import Phaser from 'phaser';
+import Graphics from '../assets/Graphics';
+import FOVLayer from '../entities/FOVLayer';
+import Player from '../entities/Player';
+import Slime from '../entities/Slime';
+import Map from '../entities/Map';
+import Powerup from '../entities/Powerup';
 
-const worldTileHeight = 81;
-const worldTileWidth = 81;
+const worldTileHeight = 25;
+const worldTileWidth = 25;
 
 export default class DungeonScene extends Phaser.Scene {
   lastX: number;
@@ -14,25 +15,28 @@ export default class DungeonScene extends Phaser.Scene {
   player: Player | null;
   slimes: Slime[];
   slimeGroup: Phaser.GameObjects.Group | null;
+  powerups: Powerup[];
+  powerupGroup: Phaser.GameObjects.Group | null;
   fov: FOVLayer | null;
   tilemap: Phaser.Tilemaps.Tilemap | null;
   roomDebugGraphics?: Phaser.GameObjects.Graphics;
+  enableDebugMode: boolean;
 
   preload(): void {
     this.load.image(Graphics.environment.name, Graphics.environment.file);
     this.load.image(Graphics.util.name, Graphics.util.file);
     this.load.spritesheet(Graphics.player.name, Graphics.player.file, {
       frameHeight: Graphics.player.height,
-      frameWidth: Graphics.player.width
+      frameWidth: Graphics.player.width,
     });
     this.load.spritesheet(Graphics.slime.name, Graphics.slime.file, {
       frameHeight: Graphics.slime.height,
-      frameWidth: Graphics.slime.width
+      frameWidth: Graphics.slime.width,
     });
   }
 
   constructor() {
-    super("DungeonScene");
+    super('DungeonScene');
     this.lastX = -1;
     this.lastY = -1;
     this.player = null;
@@ -40,20 +44,23 @@ export default class DungeonScene extends Phaser.Scene {
     this.tilemap = null;
     this.slimes = [];
     this.slimeGroup = null;
+    this.powerups = [];
+    this.powerupGroup = null;
+    this.enableDebugMode = true;
   }
 
   slimePlayerCollide(
     _: Phaser.GameObjects.GameObject,
     slimeSprite: Phaser.GameObjects.GameObject
   ) {
-    const slime = this.slimes.find(s => s.sprite === slimeSprite);
+    const slime = this.slimes.find((s) => s.sprite === slimeSprite);
     if (!slime) {
-      console.log("Missing slime for sprite collision!");
+      console.log('Missing slime for sprite collision!');
       return;
     }
 
     if (this.player!.isAttacking()) {
-      this.slimes = this.slimes.filter(s => s != slime);
+      this.slimes = this.slimes.filter((s) => s != slime);
       slime.kill();
       return false;
     } else {
@@ -62,40 +69,53 @@ export default class DungeonScene extends Phaser.Scene {
     }
   }
 
+  powerupPlayerCollide(
+    _: Phaser.GameObjects.GameObject,
+    targetSprite: Phaser.GameObjects.GameObject
+  ) {
+    const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
+    console.log('powerupPlayerCollide', targetPowerup);
+  }
+
   create(): void {
-    this.events.on("wake", () => {
-      this.scene.run("InfoScene");
+    this.events.on('wake', () => {
+      this.scene.run('InfoScene');
     });
 
-    Object.values(Graphics.player.animations).forEach(anim => {
+    Object.values(Graphics.player.animations).forEach((anim) => {
       if (!this.anims.get(anim.key)) {
         this.anims.create({
           ...anim,
           frames: this.anims.generateFrameNumbers(
             Graphics.player.name,
             anim.frames
-          )
+          ),
         });
       }
     });
 
     // TODO
-    Object.values(Graphics.slime.animations).forEach(anim => {
+    Object.values(Graphics.slime.animations).forEach((anim) => {
       if (!this.anims.get(anim.key)) {
         this.anims.create({
           ...anim,
           frames: this.anims.generateFrameNumbers(
             Graphics.slime.name,
             anim.frames
-          )
+          ),
         });
       }
     });
 
-    const map = new Map(worldTileWidth, worldTileHeight, this);
+    const map = new Map(worldTileWidth, worldTileHeight, this, {
+      enableDebugMode: true,
+    });
+
     this.tilemap = map.tilemap;
 
-    this.fov = new FOVLayer(map);
+    if (this.enableDebugMode !== true) {
+      this.fov = new FOVLayer(map);
+    }
 
     this.player = new Player(
       this.tilemap.tileToWorldX(map.startingX),
@@ -104,7 +124,13 @@ export default class DungeonScene extends Phaser.Scene {
     );
 
     this.slimes = map.slimes;
-    this.slimeGroup = this.physics.add.group(this.slimes.map(s => s.sprite));
+    this.slimeGroup = this.physics.add.group(this.slimes.map((s) => s.sprite));
+
+    this.powerups = map.powerups;
+    console.log(this.powerups);
+    this.powerupGroup = this.physics.add.group(
+      this.powerups.map((p) => p.sprite)
+    );
 
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.setZoom(3);
@@ -137,17 +163,25 @@ export default class DungeonScene extends Phaser.Scene {
       this
     );
 
+    this.physics.add.collider(
+      this.player.sprite,
+      this.powerupGroup,
+      undefined,
+      this.powerupPlayerCollide,
+      this
+    );
+
     // for (let slime of this.slimes) {
     //   this.physics.add.collider(slime.sprite, map.wallLayer);
     // }
 
-    this.input.keyboard.on("keydown_R", () => {
-      this.scene.stop("InfoScene");
-      this.scene.run("ReferenceScene");
+    this.input.keyboard.on('keydown_R', () => {
+      this.scene.stop('InfoScene');
+      this.scene.run('ReferenceScene');
       this.scene.sleep();
     });
 
-    this.input.keyboard.on("keydown_Q", () => {
+    this.input.keyboard.on('keydown_Q', () => {
       this.physics.world.drawDebug = !this.physics.world.drawDebug;
       if (!this.physics.world.debugGraphic) {
         this.physics.world.createDebugGraphic();
@@ -156,7 +190,7 @@ export default class DungeonScene extends Phaser.Scene {
       this.roomDebugGraphics!.setVisible(this.physics.world.drawDebug);
     });
 
-    this.input.keyboard.on("keydown_F", () => {
+    this.input.keyboard.on('keydown_F', () => {
       this.fov!.layer.setVisible(!this.fov!.layer.visible);
     });
 
@@ -172,7 +206,7 @@ export default class DungeonScene extends Phaser.Scene {
       );
     }
 
-    this.scene.run("InfoScene");
+    this.scene.run('InfoScene');
   }
 
   update(time: number, delta: number) {
@@ -184,9 +218,13 @@ export default class DungeonScene extends Phaser.Scene {
       slime.update(time);
     }
 
+    // for (let powerup of this.powerups) {
+    //   powerup.update(time);
+    // }
+
     const player = new Phaser.Math.Vector2({
       x: this.tilemap!.worldToTileX(this.player!.sprite.body.x),
-      y: this.tilemap!.worldToTileY(this.player!.sprite.body.y)
+      y: this.tilemap!.worldToTileY(this.player!.sprite.body.y),
     });
 
     const bounds = new Phaser.Geom.Rectangle(
@@ -196,6 +234,8 @@ export default class DungeonScene extends Phaser.Scene {
       this.tilemap!.worldToTileX(camera.worldView.height) + 2
     );
 
-    this.fov!.update(player, bounds, delta);
+    if (this.enableDebugMode !== true) {
+      this.fov!.update(player, bounds, delta);
+    }
   }
 }

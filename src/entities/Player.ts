@@ -1,5 +1,5 @@
-import Phaser from "phaser";
-import Graphics from "../assets/Graphics";
+import Phaser from 'phaser';
+import Graphics from '../assets/Graphics';
 
 const speed = 125;
 const attackSpeed = 500;
@@ -18,6 +18,14 @@ interface Keys {
   a: Phaser.Input.Keyboard.Key;
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
+  7: Phaser.Input.Keyboard.Key;
+  8: Phaser.Input.Keyboard.Key;
+  9: Phaser.Input.Keyboard.Key;
+  6: Phaser.Input.Keyboard.Key;
+  3: Phaser.Input.Keyboard.Key;
+  2: Phaser.Input.Keyboard.Key;
+  1: Phaser.Input.Keyboard.Key;
+  4: Phaser.Input.Keyboard.Key;
 }
 
 export default class Player {
@@ -51,10 +59,18 @@ export default class Player {
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      w: "w",
-      a: "a",
-      s: "s",
-      d: "d"
+      w: 'w',
+      a: 'a',
+      s: 's',
+      d: 'd',
+      8: Phaser.Input.Keyboard.KeyCodes.NUMPAD_EIGHT,
+      9: Phaser.Input.Keyboard.KeyCodes.NUMPAD_NINE,
+      6: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SIX,
+      3: Phaser.Input.Keyboard.KeyCodes.NUMPAD_THREE,
+      2: Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO,
+      1: Phaser.Input.Keyboard.KeyCodes.NUMPAD_ONE,
+      4: Phaser.Input.Keyboard.KeyCodes.NUMPAD_FOUR,
+      7: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SEVEN,
     }) as Keys;
 
     this.attackUntil = 0;
@@ -62,10 +78,13 @@ export default class Player {
     this.attacking = false;
     this.staggerUntil = 0;
     this.staggered = false;
+
     const particles = scene.add.particles(Graphics.player.name);
+
     particles.setDepth(6);
+
     this.emitter = particles.createEmitter({
-      alpha: { start: 0.7, end: 0, ease: "Cubic.easeOut" },
+      alpha: { start: 0.7, end: 0, ease: 'Cubic.easeOut' },
       follow: this.sprite,
       quantity: 1,
       lifespan: 200,
@@ -73,20 +92,22 @@ export default class Player {
       scaleX: () => (this.sprite.flipX ? -1 : 1),
       emitCallback: (particle: Phaser.GameObjects.Particles.Particle) => {
         particle.frame = this.sprite.frame;
-      }
+      },
     });
+
     this.emitter.stop();
 
     this.flashEmitter = particles.createEmitter({
-      alpha: { start: 0.5, end: 0, ease: "Cubic.easeOut" },
+      alpha: { start: 0.5, end: 0, ease: 'Cubic.easeOut' },
       follow: this.sprite,
       quantity: 1,
       lifespan: 100,
       scaleX: () => (this.sprite.flipX ? -1 : 1),
       emitCallback: (particle: Phaser.GameObjects.Particles.Particle) => {
         particle.frame = this.sprite.frame;
-      }
+      },
     });
+
     this.flashEmitter.stop();
 
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
@@ -108,15 +129,18 @@ export default class Player {
 
   update(time: number) {
     this.time = time;
+
     const keys = this.keys;
-    let attackAnim = "";
-    let moveAnim = "";
+
+    let attackAnim = '';
+    let moveAnim = '';
 
     if (this.staggered && !this.body.touching.none) {
       this.staggerUntil = this.time + staggerDuration;
       this.staggered = false;
 
       this.body.setVelocity(0);
+
       if (this.body.touching.down) {
         this.body.setVelocityY(-staggerSpeed);
       } else if (this.body.touching.up) {

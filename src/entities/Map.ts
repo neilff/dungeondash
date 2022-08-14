@@ -1,8 +1,14 @@
 import Dungeoneer from 'dungeoneer';
 import Tile, { TileType } from './Tile';
 import Slime from './Slime';
+import Powerup from './Powerup';
 import Graphics from '../assets/Graphics';
 import DungeonScene from '../scenes/DungeonScene';
+import Room from './Room';
+
+type MapOptions = {
+  enableDebugMode: boolean;
+};
 
 export default class Map {
   public readonly tiles: Tile[][];
@@ -17,20 +23,75 @@ export default class Map {
   public readonly startingY: number;
 
   public readonly slimes: Slime[];
+  public readonly powerups: Powerup[];
 
   public readonly rooms: Dungeoneer.Room[];
 
-  constructor(width: number, height: number, scene: DungeonScene) {
-    const dungeon = Dungeoneer.build({
-      width: width,
-      height: height,
-    });
+  constructor(
+    width: number,
+    height: number,
+    scene: DungeonScene,
+    options?: MapOptions
+  ) {
+    let dungeon = null;
+
+    if (options?.enableDebugMode) {
+      type TileObject = {
+        x: number;
+        y: number;
+        type: 'floor' | 'wall' | 'door';
+      };
+
+      const rooms = [new Room({ x: 0, y: 0, width, height })];
+
+      const staticTiles: Array<Array<TileObject>> = rooms.reduce(
+        (acc, room) => {
+          for (let x = 0; x < room.width; x++) {
+            const tileVertileLine: Array<TileObject> = [];
+
+            const isFirstX = x === 0;
+            const isLastX = x === room.width - 1;
+
+            for (let y = 0; y < room.height; y++) {
+              const isFirstY = y === 0;
+              const isLastY = y === room.height - 1;
+
+              tileVertileLine.push({
+                x: x,
+                y: y,
+                type:
+                  isFirstX || isLastX || isFirstY || isLastY ? 'wall' : 'floor',
+              });
+            }
+
+            acc.push(tileVertileLine);
+          }
+
+          return acc;
+        },
+        []
+      );
+
+      dungeon = {
+        seed: 'development',
+        rooms,
+        tiles: staticTiles,
+      };
+    } else {
+      dungeon = Dungeoneer.build({
+        seed: 'cififdo-sugewoi',
+        width: width,
+        height: height,
+      });
+    }
+
     this.rooms = dungeon.rooms;
 
     this.width = width;
     this.height = height;
 
     this.tiles = [];
+
     for (let y = 0; y < height; y++) {
       this.tiles.push([]);
       for (let x = 0; x < width; x++) {
@@ -40,6 +101,7 @@ export default class Map {
     }
 
     const toReset = [];
+
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const tile = this.tiles[y][x];
@@ -57,8 +119,8 @@ export default class Map {
 
     const firstRoom = dungeon.rooms[roomNumber];
 
-    this.startingX = Math.floor(firstRoom.x + firstRoom.width / 2);
-    this.startingY = Math.floor(firstRoom.y + firstRoom.height / 2);
+    this.startingX = 2; //Math.floor(firstRoom.x + firstRoom.width / 2);
+    this.startingY = 2; //Math.floor(firstRoom.y + firstRoom.height / 2);
 
     this.tilemap = scene.make.tilemap({
       tileWidth: Graphics.environment.width,
@@ -85,6 +147,10 @@ export default class Map {
         this.height,
         Graphics.environment.indices.floor.outerCorridor
       );
+
+    this.powerups = [
+      new Powerup(this.startingX - 4, this.startingY - 4, scene),
+    ];
 
     this.slimes = [];
 
@@ -149,7 +215,9 @@ export default class Map {
           tile.y
         );
         this.tileAt(tile.x, tile.y)!.open();
-        scene.fov!.recalculate();
+
+        // FOV will not exist if debug mode is enabled.
+        scene.fov?.recalculate();
       },
       this
     );
