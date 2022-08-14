@@ -1,6 +1,6 @@
-import Phaser from "phaser";
-import Graphics from "../assets/Graphics";
-import Fonts from "../assets/Fonts";
+import Phaser from 'phaser';
+import Graphics from '../assets/Graphics';
+import Fonts from '../assets/Fonts';
 
 const tilesets = Object.values(Graphics);
 
@@ -11,7 +11,7 @@ export default class ReferenceScene extends Phaser.Scene {
   title: Phaser.GameObjects.DynamicBitmapText | null;
 
   constructor() {
-    super("ReferenceScene");
+    super('ReferenceScene');
     this.index = 0;
     this.group = null;
     this.map = null;
@@ -20,25 +20,30 @@ export default class ReferenceScene extends Phaser.Scene {
 
   preload(): void {
     tilesets.forEach((t) => this.load.image(t.name, t.file));
-    this.load.bitmapFont("default", ...Fonts.default);
+    this.load.bitmapFont('default', ...Fonts.default);
   }
 
   create(): void {
-    this.title = this.add.dynamicBitmapText(20, 10, "default", "", 12);
+    this.title = this.add.dynamicBitmapText(20, 10, 'default', '', 12);
     this.previewTileset();
-    this.input.keyboard.on("keydown_N", () => {
-      this.index += 1;
-      if (this.index >= tilesets.length) {
-        this.index = 0;
-      }
-      this.reset();
-      this.previewTileset();
-    });
 
-    this.input.keyboard.on("keydown_R", () => {
-      this.scene.wake("DungeonScene");
-      this.scene.stop();
-    });
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.N)
+      .on('down', () => {
+        this.index += 1;
+        if (this.index >= tilesets.length) {
+          this.index = 0;
+        }
+        this.reset();
+        this.previewTileset();
+      });
+
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.R)
+      .on('down', () => {
+        this.scene.wake('DungeonScene');
+        this.scene.stop();
+      });
   }
 
   reset() {
@@ -56,9 +61,10 @@ export default class ReferenceScene extends Phaser.Scene {
       tileWidth: tileset.width,
       tileHeight: tileset.height,
     });
+
     const tiles = this.map.addTilesetImage(tileset.name);
     const layer = this.map.createBlankLayer(
-      "preview",
+      'preview',
       tiles,
       30,
       40,
@@ -79,7 +85,9 @@ export default class ReferenceScene extends Phaser.Scene {
       )
       .setAltFillStyle(0x2a2a2a)
       .setOutlineStyle();
-    layer.setDepth(5);
+
+    layer.setDepth(10);
+
     this.group.add(grid);
 
     for (let y = 0; y < tiles.rows; y++) {
@@ -88,7 +96,7 @@ export default class ReferenceScene extends Phaser.Scene {
         const text = this.add.bitmapText(
           this.map.tileToWorldX(x),
           this.map.tileToWorldY(y),
-          "default",
+          'default',
           idx.toString(16),
           6
         );
