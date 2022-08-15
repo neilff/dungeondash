@@ -20,8 +20,6 @@ export default class InterfaceScene extends Phaser.Scene {
     this.eventEmitter.on(
       eventTypes.playerCreated,
       ({ maxHP, HP }: { maxHP: number; HP: number }) => {
-        console.log('player spawned');
-
         this.maxHP = maxHP;
         this.HP = HP;
       }
@@ -40,8 +38,6 @@ export default class InterfaceScene extends Phaser.Scene {
     this.text = this.add.dynamicBitmapText(25, 25, 'default', '', 12);
     this.text.setAlpha(1);
     this.lastUpdate = 0;
-
-    console.log('scene ready');
   }
 
   update(time: number, _: number): void {

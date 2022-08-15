@@ -29,11 +29,17 @@ interface Keys {
   4: Phaser.Input.Keyboard.Key;
 }
 
+interface PlayerStats {
+  maxHP: number;
+  HP: number;
+}
+
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   private keys: Keys;
 
-  private HP: number;
+  private stats: PlayerStats;
+
   private attackUntil: number;
   private staggerUntil: number;
   private attackLockedUntil: number;
@@ -48,7 +54,11 @@ export default class Player {
   private eventEmitter: Phaser.Events.EventEmitter;
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
-    this.HP = 100;
+    this.stats = {
+      HP: 100,
+      maxHP: 100,
+    };
+
     this.scene = scene;
     this.sprite = scene.physics.add.sprite(x, y, Graphics.player.name, 0);
     this.sprite.setSize(8, 8);
@@ -119,10 +129,7 @@ export default class Player {
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.time = 0;
 
-    this.eventEmitter.emit(eventTypes.playerCreated, {
-      maxHP: this.HP,
-      HP: this.HP,
-    });
+    this.eventEmitter.emit(eventTypes.playerCreated, this.stats);
   }
 
   isAttacking(): boolean {
@@ -137,11 +144,11 @@ export default class Player {
       this.scene.cameras.main.flash(50, 100, 0, 0);
 
       // TODO (neilff): Hardcoded attack value
-      this.HP = this.HP - 10;
+      this.stats.HP = this.stats.HP - 10;
 
-      this.eventEmitter.emit(eventTypes.playerHit, { HP: this.HP });
+      this.eventEmitter.emit(eventTypes.playerHit, this.stats);
 
-      if (this.HP <= 0) {
+      if (this.stats.HP <= 0) {
         this.eventEmitter.emit(eventTypes.playerDeath);
       }
     }
