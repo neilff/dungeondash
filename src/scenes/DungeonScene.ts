@@ -5,6 +5,7 @@ import Player from '../entities/Player';
 import Slime from '../entities/Slime';
 import Map from '../entities/Map';
 import Powerup from '../entities/Powerup';
+import EventsCenter, { eventTypes } from '../events/EventsCenter';
 
 const worldTileHeight = 25;
 const worldTileWidth = 25;
@@ -23,6 +24,8 @@ export default class DungeonScene extends Phaser.Scene {
   tilemap: Phaser.Tilemaps.Tilemap | null;
   roomDebugGraphics?: Phaser.GameObjects.Graphics;
   enableDebugMode: boolean;
+
+  private eventEmitter: Phaser.Events.EventEmitter;
 
   preload(): void {
     this.load.image(Graphics.environment.name, Graphics.environment.file);
@@ -53,6 +56,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.powerups = [];
     this.powerupGroup = null;
     this.enableDebugMode = Boolean(gameConfig.enableDebugMode);
+    this.eventEmitter = EventsCenter;
   }
 
   slimePlayerCollide(
@@ -76,15 +80,17 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   powerupPlayerCollide(
-    _: Phaser.GameObjects.GameObject,
+    game: Phaser.GameObjects.GameObject,
     targetSprite: Phaser.GameObjects.GameObject
   ) {
     const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
     // TODO (neilff): Implement respawn when a user picks up an item
-    targetPowerup?.consume();
+    targetPowerup?.consume(game.scene);
   }
 
   create(): void {
+    this.scene.run('InterfaceScene');
+
     Object.values(Graphics.player.animations).forEach((anim) => {
       if (!this.anims.get(anim.key)) {
         this.anims.create({
@@ -213,7 +219,11 @@ export default class DungeonScene extends Phaser.Scene {
       );
     }
 
-    this.scene.run('InterfaceScene');
+    this.eventEmitter.on(eventTypes.playerDeath, () => {
+      this.registry.destroy(); // destroy registry
+      this.events.off(); // disable all active events
+      this.scene.restart(); // restart current scene
+    });
   }
 
   update(time: number, delta: number) {

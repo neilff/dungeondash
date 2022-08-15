@@ -21,7 +21,7 @@ export default class Powerup {
 
   update(time: number) {}
 
-  consume() {
+  consume(_: Phaser.Scene) {
     this.sprite.destroy();
   }
 }

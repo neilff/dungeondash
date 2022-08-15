@@ -123,7 +123,7 @@ const player: AnimSet = {
       frameRate: 30,
     },
     stagger: {
-      key: 'playerStagger',
+      key: 'playerHit',
       frames: { frames: [0x38, 0x38, 0x39, 0x3a] },
       frameRate: 30,
     },

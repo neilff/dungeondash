@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Graphics from '../assets/Graphics';
+import EventsCenter, { eventTypes } from '../events/EventsCenter';
 
 const speed = 125;
 const attackSpeed = 500;
@@ -32,6 +33,7 @@ export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   private keys: Keys;
 
+  private HP: number;
   private attackUntil: number;
   private staggerUntil: number;
   private attackLockedUntil: number;
@@ -43,8 +45,10 @@ export default class Player {
   private staggered: boolean;
   private scene: Phaser.Scene;
   private facingUp: boolean;
+  private eventEmitter: Phaser.Events.EventEmitter;
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
+    this.HP = 100;
     this.scene = scene;
     this.sprite = scene.physics.add.sprite(x, y, Graphics.player.name, 0);
     this.sprite.setSize(8, 8);
@@ -108,10 +112,17 @@ export default class Player {
       },
     });
 
+    this.eventEmitter = EventsCenter;
+
     this.flashEmitter.stop();
 
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.time = 0;
+
+    this.eventEmitter.emit(eventTypes.playerCreated, {
+      maxHP: this.HP,
+      HP: this.HP,
+    });
   }
 
   isAttacking(): boolean {
@@ -124,6 +135,15 @@ export default class Player {
       // TODO
       this.scene.cameras.main.shake(150, 0.001);
       this.scene.cameras.main.flash(50, 100, 0, 0);
+
+      // TODO (neilff): Hardcoded attack value
+      this.HP = this.HP - 10;
+
+      this.eventEmitter.emit(eventTypes.playerHit, { HP: this.HP });
+
+      if (this.HP <= 0) {
+        this.eventEmitter.emit(eventTypes.playerDeath);
+      }
     }
   }
 
