@@ -10,8 +10,6 @@ import EventsCenter, { eventTypes } from '../events/EventsCenter';
 const worldTileHeight = 25;
 const worldTileWidth = 25;
 
-const keyCodes = Phaser.Input.Keyboard.KeyCodes;
-
 export default class DungeonScene extends Phaser.Scene {
   lastX: number;
   lastY: number;
@@ -22,6 +20,7 @@ export default class DungeonScene extends Phaser.Scene {
   powerupGroup: Phaser.GameObjects.Group | null;
   fov: FOVLayer | null;
   tilemap: Phaser.Tilemaps.Tilemap | null;
+  map: Map | null;
   roomDebugGraphics?: Phaser.GameObjects.Graphics;
   enableDebugMode: boolean;
 
@@ -50,6 +49,7 @@ export default class DungeonScene extends Phaser.Scene {
     this.lastY = -1;
     this.player = null;
     this.fov = null;
+    this.map = null;
     this.tilemap = null;
     this.slimes = [];
     this.slimeGroup = null;
@@ -57,35 +57,6 @@ export default class DungeonScene extends Phaser.Scene {
     this.powerupGroup = null;
     this.enableDebugMode = Boolean(gameConfig.enableDebugMode);
     this.eventEmitter = EventsCenter;
-  }
-
-  slimePlayerCollide(
-    _: Phaser.GameObjects.GameObject,
-    slimeSprite: Phaser.GameObjects.GameObject
-  ) {
-    const slime = this.slimes.find((s) => s.sprite === slimeSprite);
-    if (!slime) {
-      console.log('Missing slime for sprite collision!');
-      return;
-    }
-
-    if (this.player!.isAttacking()) {
-      this.slimes = this.slimes.filter((s) => s != slime);
-      slime.kill();
-      return false;
-    } else {
-      this.player!.stagger();
-      return true;
-    }
-  }
-
-  powerupPlayerCollide(
-    game: Phaser.GameObjects.GameObject,
-    targetSprite: Phaser.GameObjects.GameObject
-  ) {
-    const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
-    // TODO (neilff): Implement respawn when a user picks up an item
-    targetPowerup?.consume(game.scene);
   }
 
   create(): void {
@@ -120,6 +91,7 @@ export default class DungeonScene extends Phaser.Scene {
       enableDebugMode: this.enableDebugMode,
     });
 
+    this.map = map;
     this.tilemap = map.tilemap;
 
     this.fov = new FOVLayer(map);
@@ -130,6 +102,8 @@ export default class DungeonScene extends Phaser.Scene {
       this
     );
 
+    // TODO (neilff): Rename slimes -> generic enemy class so that
+    // we can have different types of enemies.
     this.slimes = map.slimes;
     this.slimeGroup = this.physics.add.group(this.slimes.map((s) => s.sprite));
 
@@ -181,6 +155,8 @@ export default class DungeonScene extends Phaser.Scene {
       this.physics.add.collider(slime.sprite, map.wallLayer);
     }
 
+    // TODO (neilff): Move keyboard bindings to a central place.
+    // As-is it is hard to tell which key is which
     this.input.keyboard
       .addKey(Phaser.Input.Keyboard.KeyCodes.F)
       .on('down', () => {
@@ -195,35 +171,15 @@ export default class DungeonScene extends Phaser.Scene {
         this.scene.sleep();
       });
 
-    this.input.keyboard
-      .addKey(Phaser.Input.Keyboard.KeyCodes.Q)
-      .on('down', () => {
-        this.physics.world.drawDebug = !this.physics.world.drawDebug;
-        if (!this.physics.world.debugGraphic) {
-          this.physics.world.createDebugGraphic();
-        }
-        this.physics.world.debugGraphic.clear();
-        this.roomDebugGraphics!.setVisible(this.physics.world.drawDebug);
-      });
-
-    this.roomDebugGraphics = this.add.graphics({ x: 0, y: 0 });
-    this.roomDebugGraphics.setVisible(false);
-    this.roomDebugGraphics.lineStyle(2, 0xff5500, 0.5);
-
-    for (let room of map.rooms) {
-      this.roomDebugGraphics.strokeRect(
-        this.tilemap!.tileToWorldX(room.x),
-        this.tilemap!.tileToWorldY(room.y),
-        this.tilemap!.tileToWorldX(room.width),
-        this.tilemap!.tileToWorldY(room.height)
-      );
-    }
-
     this.eventEmitter.on(eventTypes.playerDeath, () => {
-      this.registry.destroy(); // destroy registry
-      this.events.off(); // disable all active events
-      this.scene.restart(); // restart current scene
+      if (this.enableDebugMode) {
+        console.info('Player has died, clearing scene.');
+      }
+
+      this.restart();
     });
+
+    this.renderDebugGraphics();
   }
 
   update(time: number, delta: number) {
@@ -248,5 +204,74 @@ export default class DungeonScene extends Phaser.Scene {
     );
 
     this.fov!.update(player, bounds, delta);
+  }
+
+  private slimePlayerCollide(
+    _: Phaser.GameObjects.GameObject,
+    slimeSprite: Phaser.GameObjects.GameObject
+  ) {
+    const slime = this.slimes.find((s) => s.sprite === slimeSprite);
+
+    if (!slime) {
+      console.warn('Missing slime for sprite collision!');
+      return;
+    }
+
+    // Player attacks Slime
+    if (this.player!.isAttacking()) {
+      this.slimes = this.slimes.filter((s) => s != slime);
+      slime.kill();
+      return false;
+    }
+
+    // Slime attacks Player
+    if (!this.player!.isAttacking()) {
+      this.player!.stagger();
+      return true;
+    }
+
+    return true;
+  }
+
+  private powerupPlayerCollide(
+    game: Phaser.GameObjects.GameObject,
+    targetSprite: Phaser.GameObjects.GameObject
+  ) {
+    const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
+    // TODO (neilff): Implement respawn when a user picks up an item
+    targetPowerup?.consume(game.scene);
+  }
+
+  private renderDebugGraphics() {
+    this.input.keyboard
+      .addKey(Phaser.Input.Keyboard.KeyCodes.Q)
+      .on('down', () => {
+        this.physics.world.drawDebug = !this.physics.world.drawDebug;
+        if (!this.physics.world.debugGraphic) {
+          this.physics.world.createDebugGraphic();
+        }
+        this.physics.world.debugGraphic.clear();
+        this.roomDebugGraphics!.setVisible(this.physics.world.drawDebug);
+      });
+
+    this.roomDebugGraphics = this.add.graphics({ x: 0, y: 0 });
+    this.roomDebugGraphics.setVisible(false);
+    this.roomDebugGraphics.lineStyle(2, 0xff5500, 0.5);
+
+    for (let room of this.map!.rooms) {
+      this.roomDebugGraphics.strokeRect(
+        this.tilemap!.tileToWorldX(room.x),
+        this.tilemap!.tileToWorldY(room.y),
+        this.tilemap!.tileToWorldX(room.width),
+        this.tilemap!.tileToWorldY(room.height)
+      );
+    }
+  }
+
+  private restart() {
+    this.eventEmitter.off(eventTypes.playerDeath);
+
+    this.registry.destroy(); // destroy registry
+    this.scene.restart(); // restart current scene
   }
 }

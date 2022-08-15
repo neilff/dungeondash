@@ -122,13 +122,12 @@ export default class Player {
       },
     });
 
-    this.eventEmitter = EventsCenter;
-
     this.flashEmitter.stop();
 
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.time = 0;
 
+    this.eventEmitter = EventsCenter;
     this.eventEmitter.emit(eventTypes.playerCreated, this.stats);
   }
 
