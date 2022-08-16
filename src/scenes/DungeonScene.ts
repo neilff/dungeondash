@@ -13,6 +13,7 @@ const worldTileWidth = 25;
 export default class DungeonScene extends Phaser.Scene {
   lastX: number;
   lastY: number;
+  currentLevel: number;
   player: Player | null;
   slimes: Slime[];
   slimeGroup: Phaser.GameObjects.Group | null;
@@ -27,6 +28,14 @@ export default class DungeonScene extends Phaser.Scene {
   private eventEmitter: Phaser.Events.EventEmitter;
 
   preload(): void {
+    this.load.spritesheet(
+      Graphics.environment.name,
+      Graphics.environment.file,
+      {
+        frameHeight: Graphics.environment.height,
+        frameWidth: Graphics.environment.width,
+      }
+    );
     this.load.image(Graphics.environment.name, Graphics.environment.file);
     this.load.image(Graphics.util.name, Graphics.util.file);
     this.load.spritesheet(Graphics.player.name, Graphics.player.file, {
@@ -45,6 +54,7 @@ export default class DungeonScene extends Phaser.Scene {
 
   constructor(gameConfig: GameConfig) {
     super('DungeonScene');
+    this.currentLevel = 1;
     this.lastX = -1;
     this.lastY = -1;
     this.player = null;
@@ -87,9 +97,15 @@ export default class DungeonScene extends Phaser.Scene {
       }
     });
 
-    const map = new Map(worldTileWidth, worldTileHeight, this, {
-      enableDebugMode: this.enableDebugMode,
-    });
+    const map = new Map(
+      this.currentLevel,
+      worldTileWidth,
+      worldTileHeight,
+      this,
+      {
+        enableDebugMode: this.enableDebugMode,
+      }
+    );
 
     this.map = map;
     this.tilemap = map.tilemap;
@@ -128,13 +144,6 @@ export default class DungeonScene extends Phaser.Scene {
     this.physics.add.collider(this.player.sprite, map.doorLayer);
     this.physics.add.collider(this.slimeGroup, map.doorLayer);
 
-    // this.physics.add.overlap(
-    //   this.player.sprite,
-    //   this.slimeGroup,
-    //   this.slimePlayerCollide,
-    //   undefined,
-    //   this
-    // );
     this.physics.add.collider(
       this.player.sprite,
       this.slimeGroup,
@@ -234,12 +243,12 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   private powerupPlayerCollide(
-    game: Phaser.GameObjects.GameObject,
+    _: Phaser.GameObjects.GameObject,
     targetSprite: Phaser.GameObjects.GameObject
   ) {
     const targetPowerup = this.powerups.find((s) => s.sprite === targetSprite);
-    // TODO (neilff): Implement respawn when a user picks up an item
-    targetPowerup?.consume(game.scene);
+
+    targetPowerup?.consume();
   }
 
   private renderDebugGraphics() {

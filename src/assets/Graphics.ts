@@ -50,6 +50,10 @@ const environment = {
       vertical: 0x92,
       destroyed: 0x35,
     },
+    stairs: {
+      down: 0x96,
+      up: 0x97,
+    },
     walls: {
       alone: 0x14,
       intersections: {

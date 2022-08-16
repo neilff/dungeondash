@@ -5,6 +5,7 @@ import Powerup from './Powerup';
 import Graphics from '../assets/Graphics';
 import DungeonScene from '../scenes/DungeonScene';
 import Room from './Room';
+import Stairs from './Stairs';
 
 const chunk = (arr: Array<any>, size: number) =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -24,15 +25,18 @@ export default class Map {
   public readonly wallLayer: Phaser.Tilemaps.TilemapLayer;
   public readonly doorLayer: Phaser.Tilemaps.TilemapLayer;
 
+  public readonly currentLevel: number;
   public readonly startingX: number;
   public readonly startingY: number;
 
+  public readonly stairs: Stairs[];
   public readonly slimes: Slime[];
   public readonly powerups: Powerup[];
 
   public readonly rooms: Dungeoneer.Room[];
 
   constructor(
+    currentLevel: number,
     width: number,
     height: number,
     scene: DungeonScene,
@@ -92,7 +96,9 @@ export default class Map {
       });
     }
 
-    this.rooms = dungeon.rooms;
+    this.currentLevel = currentLevel;
+
+    this.rooms = dungeon!.rooms;
 
     this.width = width;
     this.height = height;
@@ -102,7 +108,7 @@ export default class Map {
     for (let y = 0; y < height; y++) {
       this.tiles.push([]);
       for (let x = 0; x < width; x++) {
-        const tileType = Tile.tileTypeFor(dungeon.tiles[x][y].type);
+        const tileType = Tile.tileTypeFor(dungeon!.tiles[x][y].type);
         this.tiles[y][x] = new Tile(tileType, x, y, this);
       }
     }
@@ -122,9 +128,9 @@ export default class Map {
       this.tiles[d.y][d.x] = new Tile(TileType.None, d.x, d.y, this);
     });
 
-    const roomNumber = Math.floor(Math.random() * dungeon.rooms.length);
+    const roomNumber = Math.floor(Math.random() * dungeon!.rooms.length);
 
-    const firstRoom = dungeon.rooms[roomNumber];
+    const firstRoom = dungeon!.rooms[roomNumber];
 
     this.startingX = 2; //Math.floor(firstRoom.x + firstRoom.width / 2);
     this.startingY = 2; //Math.floor(firstRoom.y + firstRoom.height / 2);
@@ -144,6 +150,8 @@ export default class Map {
       Graphics.environment.margin,
       Graphics.environment.spacing
     );
+
+    console.log({ dungeonTiles });
 
     this.groundLayer = this.tilemap
       .createBlankLayer('Ground', dungeonTiles, 0, 0)
@@ -170,9 +178,21 @@ export default class Map {
       return acc;
     }, []);
 
+    this.stairs = [
+      // TODO (neilff): This is a temporary workaround to render stairs for
+      // development purposes.
+      new Stairs('down', this.startingX + 48, this.startingY + 128, scene),
+    ];
+
+    if (this.currentLevel > 1) {
+      this.stairs.push(
+        new Stairs('up', this.startingX + 48, this.startingY + 64, scene)
+      );
+    }
+
     this.slimes = [];
 
-    for (let room of dungeon.rooms) {
+    for (let room of dungeon!.rooms) {
       this.groundLayer.randomize(
         room.x - 1,
         room.y - 1,
