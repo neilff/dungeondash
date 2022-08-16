@@ -1,33 +1,13 @@
 import Phaser from 'phaser';
 import Fonts from '../assets/Fonts';
-import EventsCenter, { eventTypes } from '../events/EventsCenter';
+import { PlayerStats } from '../utils/types';
 
 export default class InterfaceScene extends Phaser.Scene {
   text?: Phaser.GameObjects.DynamicBitmapText;
   lastUpdate?: number;
 
-  private eventEmitter: Phaser.Events.EventEmitter;
-  private maxHP: number | null;
-  private HP: number | null;
-
   constructor() {
     super({ key: 'InterfaceScene' });
-
-    this.maxHP = null;
-    this.HP = null;
-    this.eventEmitter = EventsCenter;
-
-    this.eventEmitter.on(
-      eventTypes.playerCreated,
-      ({ maxHP, HP }: { maxHP: number; HP: number }) => {
-        this.maxHP = maxHP;
-        this.HP = HP;
-      }
-    );
-
-    this.eventEmitter.on(eventTypes.playerHit, ({ HP }: { HP: number }) => {
-      this.HP = HP;
-    });
   }
 
   preload(): void {
@@ -42,7 +22,14 @@ export default class InterfaceScene extends Phaser.Scene {
 
   update(time: number, _: number): void {
     if (time > this.lastUpdate! + 100) {
-      this.text!.setText([`HP: ${this.HP} / ${this.maxHP}`]);
+      const { HP, maxHP, MP, maxMP, stamina, maxStamina }: PlayerStats =
+        this.registry.get('playerStats');
+
+      this.text!.setText([
+        `HP: ${HP} / ${maxHP}` +
+          `\nMP: ${MP} / ${maxMP}` +
+          `\nStamina: ${stamina} / ${maxStamina}`,
+      ]);
       this.lastUpdate = time;
     }
   }

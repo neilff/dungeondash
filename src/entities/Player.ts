@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Graphics from '../assets/Graphics';
 import EventsCenter, { eventTypes } from '../events/EventsCenter';
+import { ItemType, PlayerStats } from '../utils/types';
 
 const speed = 125;
 const attackSpeed = 500;
@@ -29,11 +30,6 @@ interface Keys {
   4: Phaser.Input.Keyboard.Key;
 }
 
-interface PlayerStats {
-  maxHP: number;
-  HP: number;
-}
-
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   private keys: Keys;
@@ -55,8 +51,12 @@ export default class Player {
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
-      HP: 100,
       maxHP: 100,
+      HP: 100,
+      maxMP: 10,
+      MP: 0,
+      maxStamina: 50,
+      stamina: 0,
     };
 
     this.scene = scene;
@@ -127,8 +127,30 @@ export default class Player {
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.time = 0;
 
+    // Allows other objects to subscribe to changes to the players stats
+    this.scene.registry.set('playerStats', this.stats);
+
+    // The event emitter allows us to communicate changes that occur to
+    // the player from external sources. For example, when a power up is
+    // picked up, we emit an event to notify the game that the player's
+    // stats should be changed.
     this.eventEmitter = EventsCenter;
-    this.eventEmitter.emit(eventTypes.playerCreated, this.stats);
+    this.eventEmitter.on(
+      eventTypes.POWERUP_CONSUMED,
+      ({ itemType }: { itemType: ItemType }) => {
+        switch (itemType) {
+          case 'healthPotion':
+            this.heal();
+            return;
+          case 'manaPotion':
+            this.increaseMP();
+            return;
+          case 'staminaPotion':
+            this.increaseStamina();
+            return;
+        }
+      }
+    );
   }
 
   isAttacking(): boolean {
@@ -145,11 +167,27 @@ export default class Player {
       // TODO (neilff): Hardcoded attack value
       this.stats.HP = this.stats.HP - 10;
 
-      this.eventEmitter.emit(eventTypes.playerHit, this.stats);
-
       if (this.stats.HP <= 0) {
-        this.eventEmitter.emit(eventTypes.playerDeath);
+        this.eventEmitter.emit(eventTypes.PLAYER_DEATH);
       }
+    }
+  }
+
+  heal(): void {
+    if (this.stats.HP < this.stats.maxHP) {
+      this.stats.HP = this.stats.HP + 10;
+    }
+  }
+
+  increaseMP(): void {
+    if (this.stats.MP < this.stats.maxMP) {
+      this.stats.MP = this.stats.MP + 10;
+    }
+  }
+
+  increaseStamina(): void {
+    if (this.stats.stamina < this.stats.maxStamina) {
+      this.stats.stamina = this.stats.stamina + 10;
     }
   }
 
@@ -181,7 +219,6 @@ export default class Player {
       this.sprite.anims.play(Graphics.player.animations.stagger.key);
 
       this.flashEmitter.start();
-      // this.sprite.setBlendMode(Phaser.BlendModes.MULTIPLY);
     }
 
     if (time < this.attackUntil || time < this.staggerUntil) {
@@ -246,9 +283,11 @@ export default class Player {
     this.sprite.anims.play(moveAnim, true);
     this.body.velocity.normalize().scale(speed);
     this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+
     if (this.emitter.on) {
       this.emitter.stop();
     }
+
     if (this.flashEmitter.on) {
       this.flashEmitter.stop();
     }

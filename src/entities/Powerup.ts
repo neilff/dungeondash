@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import Graphics from '../assets/Graphics';
-
-type ItemType = keyof typeof Graphics.items.indices;
+import EventsCenter, { eventTypes } from '../events/EventsCenter';
+import { ItemType } from '../utils/types';
 
 export default class Powerup {
   public readonly sprite: Phaser.Physics.Arcade.Sprite;
   private readonly body: Phaser.Physics.Arcade.Body;
+  private readonly itemType: ItemType;
+  private eventEmitter: Phaser.Events.EventEmitter;
 
   constructor(itemType: ItemType, x: number, y: number, scene: Phaser.Scene) {
     const frame = Graphics.items.indices[itemType];
@@ -17,11 +19,16 @@ export default class Powerup {
 
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.body.setImmovable(true);
+
+    this.itemType = itemType;
+    this.eventEmitter = EventsCenter;
   }
 
-  update(time: number) {}
+  consume(): void {
+    this.eventEmitter.emit(eventTypes.POWERUP_CONSUMED, {
+      itemType: this.itemType,
+    });
 
-  consume(_: Phaser.Scene) {
     this.sprite.destroy();
   }
 }

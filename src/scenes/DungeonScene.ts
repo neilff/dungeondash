@@ -171,7 +171,7 @@ export default class DungeonScene extends Phaser.Scene {
         this.scene.sleep();
       });
 
-    this.eventEmitter.on(eventTypes.playerDeath, () => {
+    this.eventEmitter.on(eventTypes.PLAYER_DEATH, () => {
       if (this.enableDebugMode) {
         console.info('Player has died, clearing scene.');
       }
@@ -269,7 +269,7 @@ export default class DungeonScene extends Phaser.Scene {
   }
 
   private restart() {
-    this.eventEmitter.off(eventTypes.playerDeath);
+    this.eventEmitter.off(eventTypes.PLAYER_DEATH);
 
     this.registry.destroy(); // destroy registry
     this.scene.restart(); // restart current scene

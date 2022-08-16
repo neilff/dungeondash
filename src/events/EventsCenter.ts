@@ -3,10 +3,11 @@ import Phaser from 'phaser';
 const EventsCenter = new Phaser.Events.EventEmitter();
 
 export const eventTypes = {
-  playerCreated: 'player_create',
-  playerDeath: 'player_death',
-  playerAttack: 'player_attack',
-  playerHit: 'player_hit',
+  PLAYER_CREATED: 'player_create',
+  PLAYER_DEATH: 'player_death',
+  PLAYER_ATTACK: 'player_attack',
+  PLAYER_HEALTH_UPDATE: 'player_health_update',
+  POWERUP_CONSUMED: 'powerup_consumed',
 };
 
 export default EventsCenter;
