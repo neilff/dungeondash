@@ -189,15 +189,14 @@ export default class GameScene extends Phaser.Scene {
     // TODO (neilff): Move keyboard bindings to a central place.
     // As-is it is hard to tell which key is which
     this.input.keyboard
-      .addKey(Phaser.Input.Keyboard.KeyCodes.F)
+      .addKey(Phaser.Input.Keyboard.KeyCodes.L)
       .on('down', () => {
         this.fov?.layer.setVisible(!this.fov?.layer.visible);
       });
 
     this.input.keyboard
-      .addKey(Phaser.Input.Keyboard.KeyCodes.R)
+      .addKey(Phaser.Input.Keyboard.KeyCodes.O)
       .on('down', () => {
-        this.scene.stop('InfoScene');
         this.scene.run('ReferenceScene');
         this.scene.sleep();
       });
@@ -241,12 +240,6 @@ export default class GameScene extends Phaser.Scene {
     _playerObj: Phaser.GameObjects.GameObject,
     stairSprite: Phaser.GameObjects.GameObject
   ) {
-    const isFacingStairs = _playerObj.body.velocity.x > 0;
-
-    if (!isFacingStairs) {
-      return false;
-    }
-
     const stairs = this.stairs.find((s) => s.sprite === stairSprite);
 
     if (!stairs) {

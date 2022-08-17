@@ -191,6 +191,16 @@ export default class Player {
     }
   }
 
+  private performSpecialAttack(time: number, attackAnim: string): void {
+    this.attackUntil = time + attackDuration;
+    this.attackLockedUntil = time + attackDuration + attackCooldown;
+    this.body.velocity.normalize().scale(attackSpeed);
+    this.sprite.anims.play(attackAnim, true);
+    this.emitter.start();
+    this.sprite.setBlendMode(Phaser.BlendModes.ADD);
+    this.attacking = true;
+  }
+
   update(time: number) {
     this.time = time;
 
@@ -269,13 +279,7 @@ export default class Player {
       time > this.attackLockedUntil &&
       this.body.velocity.length() > 0
     ) {
-      this.attackUntil = time + attackDuration;
-      this.attackLockedUntil = time + attackDuration + attackCooldown;
-      this.body.velocity.normalize().scale(attackSpeed);
-      this.sprite.anims.play(attackAnim, true);
-      this.emitter.start();
-      this.sprite.setBlendMode(Phaser.BlendModes.ADD);
-      this.attacking = true;
+      this.performSpecialAttack(time, attackAnim);
       return;
     }
 
