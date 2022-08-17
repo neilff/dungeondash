@@ -1,28 +1,20 @@
-# Dungeon Dash!
+# Phaser 3 Template
 
-An experiment with making a dungeon crawler with Open Source or public domain assets, using Phaser 3 & Typescript.
+A minimal template for Phaser 3.
 
-Live demo available at https://dungeon-dash.surge.sh
+## Development
 
-MIT License applies unless otherwise noted.
+```
+npm install
+npm run dev
+```
 
-## Contributing
+## Deployment
 
-Get a local instance running with `npm i` and then `npm run start`.
+This template uses [surge.sh](https://surge.sh) for deployments. You need a `surge.sh` account to begin.
 
-Press `R` in game to see a tilesheet reference, press `R` again to return to the game. Press `Q` to show the debug layer.
+Add your `surge.sh` domain to `.env` your file. See `.env-example` for more information.
 
-Contributions must be valid typescript & formatted with prettier.js.
-
-Otherwise, go nuts.
-
-## TODO
-
- * use `PerformanceObserver` to get a more accurate FPS value
-
-## Credits
-
-* Uses [mrpas](https://www.npmjs.com/package/mrpas) to determine the field of view
-* Uses [dungeoneer](https://www.npmjs.com/package/dungeoneer) to generate the dungeon
-* `Rogue*.png` files are from the [Rogue Dungeon Tileset 16x16](https://fongoose.itch.io/rogue-dungeon-tileset-16x16) by [fongoose](https://twitter.com/fongoosemike)
-* "CasualEncounter" font from Anna Anthropy's [World of Fonts](https://w.itch.io/world-of-fonts)
+```
+npm run deploy
+```
