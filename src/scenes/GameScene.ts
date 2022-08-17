@@ -30,31 +30,6 @@ export default class GameScene extends Phaser.Scene {
 
   private eventEmitter: Phaser.Events.EventEmitter;
 
-  preload(): void {
-    this.load.spritesheet(
-      Graphics.environment.name,
-      Graphics.environment.file,
-      {
-        frameHeight: Graphics.environment.height,
-        frameWidth: Graphics.environment.width,
-      }
-    );
-    this.load.image(Graphics.environment.name, Graphics.environment.file);
-    this.load.image(Graphics.util.name, Graphics.util.file);
-    this.load.spritesheet(Graphics.player.name, Graphics.player.file, {
-      frameHeight: Graphics.player.height,
-      frameWidth: Graphics.player.width,
-    });
-    this.load.spritesheet(Graphics.slime.name, Graphics.slime.file, {
-      frameHeight: Graphics.slime.height,
-      frameWidth: Graphics.slime.width,
-    });
-    this.load.spritesheet(Graphics.items.name, Graphics.items.file, {
-      frameHeight: Graphics.items.height,
-      frameWidth: Graphics.items.width,
-    });
-  }
-
   constructor() {
     super('GameScene');
     this.currentLevel = 1;
@@ -78,31 +53,6 @@ export default class GameScene extends Phaser.Scene {
     this.enableDebugMode = this.registry.get('devMode');
 
     this.scene.run('InterfaceScene');
-
-    Object.values(Graphics.player.animations).forEach((anim) => {
-      if (!this.anims.get(anim.key)) {
-        this.anims.create({
-          ...anim,
-          frames: this.anims.generateFrameNumbers(
-            Graphics.player.name,
-            anim.frames
-          ),
-        });
-      }
-    });
-
-    // TODO
-    Object.values(Graphics.slime.animations).forEach((anim) => {
-      if (!this.anims.get(anim.key)) {
-        this.anims.create({
-          ...anim,
-          frames: this.anims.generateFrameNumbers(
-            Graphics.slime.name,
-            anim.frames
-          ),
-        });
-      }
-    });
 
     const map = new Map(
       this.currentLevel,

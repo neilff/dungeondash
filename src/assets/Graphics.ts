@@ -50,10 +50,6 @@ const environment = {
       vertical: 0x92,
       destroyed: 0x35,
     },
-    stairs: {
-      down: 0x96,
-      up: 0x97,
-    },
     walls: {
       alone: 0x14,
       intersections: {
@@ -75,6 +71,19 @@ const environment = {
         e_door: 0x65,
         w_door: 0x67,
       },
+    },
+  },
+};
+
+const interactive = {
+  name: 'interactive',
+  width: 16,
+  height: 16,
+  file: RogueEnvironment,
+  indices: {
+    stairs: {
+      down: 0x96,
+      up: 0x97,
     },
   },
 };
@@ -201,4 +210,5 @@ export default {
   slime,
   items,
   util,
+  interactive,
 };

@@ -15,12 +15,12 @@ export default class Stairs {
     y: number,
     scene: Phaser.Scene
   ) {
-    const frame = Graphics.environment.indices.stairs[direction];
+    const frame = Graphics.interactive.indices.stairs[direction];
 
     this.sprite = scene.physics.add.staticSprite(
       x,
       y,
-      Graphics.environment.name,
+      Graphics.interactive.name,
       frame
     );
     this.sprite.setSize(4, 4);
