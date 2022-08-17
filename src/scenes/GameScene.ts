@@ -10,7 +10,7 @@ import EventsCenter, { eventTypes } from '../events/EventsCenter';
 const worldTileHeight = 25;
 const worldTileWidth = 25;
 
-export default class DungeonScene extends Phaser.Scene {
+export default class GameScene extends Phaser.Scene {
   lastX: number;
   lastY: number;
   currentLevel: number;
@@ -52,8 +52,8 @@ export default class DungeonScene extends Phaser.Scene {
     });
   }
 
-  constructor(gameConfig: GameConfig) {
-    super('DungeonScene');
+  constructor() {
+    super('GameScene');
     this.currentLevel = 1;
     this.lastX = -1;
     this.lastY = -1;
@@ -65,11 +65,13 @@ export default class DungeonScene extends Phaser.Scene {
     this.slimeGroup = null;
     this.powerups = [];
     this.powerupGroup = null;
-    this.enableDebugMode = Boolean(gameConfig.enableDebugMode);
     this.eventEmitter = EventsCenter;
+    this.enableDebugMode = false;
   }
 
   create(): void {
+    this.enableDebugMode = this.registry.get('devMode');
+
     this.scene.run('InterfaceScene');
 
     Object.values(Graphics.player.animations).forEach((anim) => {
@@ -110,7 +112,9 @@ export default class DungeonScene extends Phaser.Scene {
     this.map = map;
     this.tilemap = map.tilemap;
 
-    this.fov = new FOVLayer(map);
+    if (!this.enableDebugMode) {
+      this.fov = new FOVLayer(map);
+    }
 
     this.player = new Player(
       this.tilemap.tileToWorldX(map.startingX),
@@ -212,7 +216,7 @@ export default class DungeonScene extends Phaser.Scene {
       this.tilemap!.worldToTileX(camera.worldView.height) + 2
     );
 
-    this.fov!.update(player, bounds, delta);
+    this.fov?.update(player, bounds, delta);
   }
 
   private slimePlayerCollide(

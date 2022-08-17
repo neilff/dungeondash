@@ -3,7 +3,7 @@ import Tile, { TileType } from './Tile';
 import Slime from './Slime';
 import Powerup from './Powerup';
 import Graphics from '../assets/Graphics';
-import DungeonScene from '../scenes/DungeonScene';
+import GameScene from '../scenes/GameScene';
 import Room from './Room';
 import Stairs from './Stairs';
 
@@ -39,7 +39,7 @@ export default class Map {
     currentLevel: number,
     width: number,
     height: number,
-    scene: DungeonScene,
+    scene: GameScene,
     options: MapOptions
   ) {
     let dungeon = null;

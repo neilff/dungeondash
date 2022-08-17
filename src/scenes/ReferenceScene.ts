@@ -41,7 +41,7 @@ export default class ReferenceScene extends Phaser.Scene {
     this.input.keyboard
       .addKey(Phaser.Input.Keyboard.KeyCodes.R)
       .on('down', () => {
-        this.scene.wake('DungeonScene');
+        this.scene.wake('GameScene');
         this.scene.stop();
       });
   }
