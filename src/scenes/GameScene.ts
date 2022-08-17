@@ -239,9 +239,24 @@ export default class GameScene extends Phaser.Scene {
 
   private stairsPlayerCollide(
     _playerObj: Phaser.GameObjects.GameObject,
-    _stairObj: Phaser.GameObjects.GameObject
+    stairSprite: Phaser.GameObjects.GameObject
   ) {
-    console.log('stairsPlayerCollide');
+    const isFacingStairs = _playerObj.body.velocity.x > 0;
+
+    if (!isFacingStairs) {
+      return false;
+    }
+
+    const stairs = this.stairs.find((s) => s.sprite === stairSprite);
+
+    if (!stairs) {
+      console.warn('Missing stair sprite in stairs array!');
+      return false;
+    }
+
+    stairs.activate();
+
+    return true;
   }
 
   private slimePlayerCollide(

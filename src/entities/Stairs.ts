@@ -27,7 +27,7 @@ export default class Stairs {
       Graphics.environment.height,
       Graphics.environment.width
     );
-    this.sprite.setOffset(0, 0);
+    this.sprite.setOffset(-5, 0);
     this.sprite.setDepth(5);
 
     this.direction = direction;
