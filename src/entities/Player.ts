@@ -5,10 +5,12 @@ import { ItemType, PlayerStats } from '../utils/types';
 
 const speed = 125;
 const attackSpeed = 500;
-const attackDuration = 165;
+const specialAttackDuration = 165;
+const specialAttackCooldown = specialAttackDuration * 2;
+const slashDuration = specialAttackDuration / 2;
+const slashCooldown = specialAttackCooldown / 2;
 const staggerDuration = 200;
 const staggerSpeed = 100;
-const attackCooldown = attackDuration * 2;
 
 interface Keys {
   up: Phaser.Input.Keyboard.Key;
@@ -16,18 +18,11 @@ interface Keys {
   left: Phaser.Input.Keyboard.Key;
   right: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
+  f: Phaser.Input.Keyboard.Key;
   w: Phaser.Input.Keyboard.Key;
   a: Phaser.Input.Keyboard.Key;
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
-  7: Phaser.Input.Keyboard.Key;
-  8: Phaser.Input.Keyboard.Key;
-  9: Phaser.Input.Keyboard.Key;
-  6: Phaser.Input.Keyboard.Key;
-  3: Phaser.Input.Keyboard.Key;
-  2: Phaser.Input.Keyboard.Key;
-  1: Phaser.Input.Keyboard.Key;
-  4: Phaser.Input.Keyboard.Key;
 }
 
 export default class Player {
@@ -48,6 +43,7 @@ export default class Player {
   private scene: Phaser.Scene;
   private facingUp: boolean;
   private eventEmitter: Phaser.Events.EventEmitter;
+  private lastDirection: 'left' | 'right' | 'up' | 'down' | 'idle';
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
@@ -68,25 +64,22 @@ export default class Player {
     this.sprite.setDepth(5);
 
     this.keys = scene.input.keyboard.addKeys({
+      // Movement
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       w: 'w',
       a: 'a',
       s: 's',
       d: 'd',
-      8: Phaser.Input.Keyboard.KeyCodes.NUMPAD_EIGHT,
-      9: Phaser.Input.Keyboard.KeyCodes.NUMPAD_NINE,
-      6: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SIX,
-      3: Phaser.Input.Keyboard.KeyCodes.NUMPAD_THREE,
-      2: Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO,
-      1: Phaser.Input.Keyboard.KeyCodes.NUMPAD_ONE,
-      4: Phaser.Input.Keyboard.KeyCodes.NUMPAD_FOUR,
-      7: Phaser.Input.Keyboard.KeyCodes.NUMPAD_SEVEN,
+
+      // Attacks
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      f: 'f',
     }) as Keys;
 
+    this.lastDirection = 'down';
     this.attackUntil = 0;
     this.attackLockedUntil = 0;
     this.attacking = false;
@@ -192,13 +185,40 @@ export default class Player {
   }
 
   private performSpecialAttack(time: number, attackAnim: string): void {
-    this.attackUntil = time + attackDuration;
-    this.attackLockedUntil = time + attackDuration + attackCooldown;
+    this.attackUntil = time + specialAttackDuration;
+    this.attackLockedUntil =
+      time + specialAttackDuration + specialAttackCooldown;
     this.body.velocity.normalize().scale(attackSpeed);
     this.sprite.anims.play(attackAnim, true);
     this.emitter.start();
     this.sprite.setBlendMode(Phaser.BlendModes.ADD);
     this.attacking = true;
+  }
+
+  private performSlash(time: number, attackAnim: string): void {
+    this.attackUntil = time + slashDuration;
+    this.attackLockedUntil = time + slashDuration + slashCooldown;
+    // this.body.velocity.normalize().scale(attackSpeed);
+    this.sprite.anims.play(attackAnim, true);
+    this.attacking = true;
+  }
+
+  private getDirection({
+    left,
+    right,
+    up,
+    down,
+  }: {
+    left: boolean;
+    right: boolean;
+    up: boolean;
+    down: boolean;
+  }) {
+    if (left) return 'left';
+    if (right) return 'right';
+    if (up) return 'up';
+    if (down) return 'down';
+    return this.lastDirection;
   }
 
   update(time: number) {
@@ -242,6 +262,8 @@ export default class Player {
     const up = keys.up.isDown || keys.w.isDown;
     const down = keys.down.isDown || keys.s.isDown;
 
+    this.lastDirection = this.getDirection({ left, right, up, down });
+
     if (!this.body.blocked.left && left) {
       this.body.setVelocityX(-speed);
       this.sprite.setFlipX(true);
@@ -270,8 +292,14 @@ export default class Player {
       this.facingUp = true;
     } else if (this.facingUp) {
       moveAnim = Graphics.player.animations.idleBack.key;
+      attackAnim = Graphics.player.animations.slashUp.key;
     } else {
+      const isFacingHorizontal =
+        this.lastDirection === 'left' || this.lastDirection === 'right';
       moveAnim = Graphics.player.animations.idle.key;
+      attackAnim = isFacingHorizontal
+        ? Graphics.player.animations.slash.key
+        : Graphics.player.animations.slashDown.key;
     }
 
     if (
@@ -280,6 +308,11 @@ export default class Player {
       this.body.velocity.length() > 0
     ) {
       this.performSpecialAttack(time, attackAnim);
+      return;
+    }
+
+    if (keys.f.isDown && time > this.attackLockedUntil) {
+      this.performSlash(time, attackAnim);
       return;
     }
 

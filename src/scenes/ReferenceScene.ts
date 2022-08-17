@@ -39,7 +39,7 @@ export default class ReferenceScene extends Phaser.Scene {
       });
 
     this.input.keyboard
-      .addKey(Phaser.Input.Keyboard.KeyCodes.R)
+      .addKey(Phaser.Input.Keyboard.KeyCodes.O)
       .on('down', () => {
         this.scene.wake('GameScene');
         this.scene.stop();
