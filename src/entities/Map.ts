@@ -90,7 +90,6 @@ export default class Map {
 
     if (!options.enableDebugMode) {
       dungeon = Dungeoneer.build({
-        seed: 'cififdo-sugewoi',
         width: width,
         height: height,
       });
@@ -130,10 +129,15 @@ export default class Map {
 
     const roomNumber = Math.floor(Math.random() * dungeon!.rooms.length);
 
-    const firstRoom = dungeon!.rooms[roomNumber];
+    if (options.enableDebugMode) {
+      this.startingX = 2;
+      this.startingY = 2;
+    } else {
+      const firstRoom = dungeon!.rooms[roomNumber];
 
-    this.startingX = 2; //Math.floor(firstRoom.x + firstRoom.width / 2);
-    this.startingY = 2; //Math.floor(firstRoom.y + firstRoom.height / 2);
+      this.startingX = Math.floor(firstRoom.x + firstRoom.width / 2);
+      this.startingY = Math.floor(firstRoom.y + firstRoom.height / 2);
+    }
 
     this.tilemap = scene.make.tilemap({
       tileWidth: Graphics.environment.width,
@@ -150,8 +154,6 @@ export default class Map {
       Graphics.environment.margin,
       Graphics.environment.spacing
     );
-
-    console.log({ dungeonTiles });
 
     this.groundLayer = this.tilemap
       .createBlankLayer('Ground', dungeonTiles, 0, 0)
@@ -211,6 +213,7 @@ export default class Map {
         room.y + room.height - 1
       );
       const numSlimes = Phaser.Math.Between(1, 3);
+
       for (let i = 0; i < numSlimes; i++) {
         this.slimes.push(
           new Slime(
@@ -235,6 +238,7 @@ export default class Map {
         }
       }
     }
+
     this.wallLayer.setCollisionBetween(0, 0x7f);
 
     const collidableDoors = [

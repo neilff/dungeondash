@@ -3,6 +3,7 @@ import Graphics from '../assets/Graphics';
 import FOVLayer from '../entities/FOVLayer';
 import Player from '../entities/Player';
 import Slime from '../entities/Slime';
+import Stairs from '../entities/Stairs';
 import Map from '../entities/Map';
 import Powerup from '../entities/Powerup';
 import EventsCenter, { eventTypes } from '../events/EventsCenter';
@@ -17,6 +18,8 @@ export default class GameScene extends Phaser.Scene {
   player: Player | null;
   slimes: Slime[];
   slimeGroup: Phaser.GameObjects.Group | null;
+  stairs: Stairs[];
+  stairGroup: Phaser.GameObjects.Group | null;
   powerups: Powerup[];
   powerupGroup: Phaser.GameObjects.Group | null;
   fov: FOVLayer | null;
@@ -63,6 +66,8 @@ export default class GameScene extends Phaser.Scene {
     this.tilemap = null;
     this.slimes = [];
     this.slimeGroup = null;
+    this.stairs = [];
+    this.stairGroup = null;
     this.powerups = [];
     this.powerupGroup = null;
     this.eventEmitter = EventsCenter;
@@ -132,6 +137,11 @@ export default class GameScene extends Phaser.Scene {
       this.powerups.map((p) => p.sprite)
     );
 
+    this.stairs = map.stairs;
+    this.stairGroup = this.physics.add.staticGroup(
+      this.stairs.map((p) => p.sprite)
+    );
+
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.setZoom(3);
     this.cameras.main.setBounds(
@@ -147,6 +157,14 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player.sprite, map.doorLayer);
     this.physics.add.collider(this.slimeGroup, map.doorLayer);
+
+    this.physics.add.collider(
+      this.player.sprite,
+      this.stairGroup,
+      undefined,
+      this.stairsPlayerCollide,
+      this
+    );
 
     this.physics.add.collider(
       this.player.sprite,
@@ -219,6 +237,13 @@ export default class GameScene extends Phaser.Scene {
     this.fov?.update(player, bounds, delta);
   }
 
+  private stairsPlayerCollide(
+    _playerObj: Phaser.GameObjects.GameObject,
+    _stairObj: Phaser.GameObjects.GameObject
+  ) {
+    console.log('stairsPlayerCollide');
+  }
+
   private slimePlayerCollide(
     _: Phaser.GameObjects.GameObject,
     slimeSprite: Phaser.GameObjects.GameObject
@@ -243,7 +268,7 @@ export default class GameScene extends Phaser.Scene {
       return true;
     }
 
-    return true;
+    return;
   }
 
   private powerupPlayerCollide(
@@ -284,7 +309,7 @@ export default class GameScene extends Phaser.Scene {
   private restart() {
     this.eventEmitter.off(eventTypes.PLAYER_DEATH);
 
-    this.registry.destroy(); // destroy registry
+    this.registry.reset(); // destroy registry
     this.scene.restart(); // restart current scene
   }
 }

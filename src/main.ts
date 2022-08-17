@@ -13,8 +13,7 @@ const game = new Phaser.Game({
   physics: { default: 'arcade', arcade: { debug: true, gravity: { y: 0 } } },
   scene: [GameScene, InfoScene, ReferenceScene, InterfaceScene],
   scale: {
-    // mode: Phaser.Scale.RESIZE,
-    mode: Phaser.Scale.NONE,
+    mode: Phaser.Scale.RESIZE,
   },
   zoom: 1,
   plugins: {
