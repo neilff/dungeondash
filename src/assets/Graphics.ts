@@ -1,4 +1,5 @@
-import RogueEnvironment from '../../assets/fongoose/RogueEnvironment16x16-extruded.png';
+import RogueEnvironment from '../../assets/fongoose/RogueEnvironment16x16.png';
+import RogueEnvironmentExtruded from '../../assets/fongoose/RogueEnvironment16x16-extruded.png';
 import RoguePlayer from '../../assets/fongoose/RoguePlayer_48x48.png';
 import RogueSlime from '../../assets/fongoose/RogueSlime32x32.png';
 import RogueItems from '../../assets/fongoose/RogueItems16x16.png';
@@ -38,7 +39,7 @@ const environment = {
   height: 16,
   margin: 1,
   spacing: 2,
-  file: RogueEnvironment,
+  file: RogueEnvironmentExtruded,
   indices: {
     floor: {
       outer: [0x05, 0x05, 0x05, 0x15, 0x07, 0x17],
@@ -82,8 +83,8 @@ const interactive = {
   file: RogueEnvironment,
   indices: {
     stairs: {
-      down: 0x96,
-      up: 0x97,
+      down: 0x75,
+      up: 0x76,
     },
   },
 };

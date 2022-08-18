@@ -8,11 +8,11 @@ export default class PreloaderScene extends Phaser.Scene {
 
   preload(): void {
     this.load.spritesheet(
-      Graphics.environment.name,
-      Graphics.environment.file,
+      Graphics.interactive.name,
+      Graphics.interactive.file,
       {
-        frameHeight: Graphics.environment.height,
-        frameWidth: Graphics.environment.width,
+        frameHeight: Graphics.interactive.height,
+        frameWidth: Graphics.interactive.width,
       }
     );
     this.load.image(Graphics.environment.name, Graphics.environment.file);

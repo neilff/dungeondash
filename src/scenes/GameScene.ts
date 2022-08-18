@@ -117,6 +117,14 @@ export default class GameScene extends Phaser.Scene {
     );
 
     this.physics.add.collider(
+      this.player.hitBox,
+      this.slimeGroup,
+      undefined,
+      this.playerAttackSlime,
+      this
+    );
+
+    this.physics.add.collider(
       this.player.sprite,
       this.slimeGroup,
       undefined,
@@ -200,6 +208,27 @@ export default class GameScene extends Phaser.Scene {
     stairs.activate();
 
     return true;
+  }
+
+  private playerAttackSlime(
+    _: Phaser.GameObjects.GameObject,
+    slimeSprite: Phaser.GameObjects.GameObject
+  ) {
+    const slime = this.slimes.find((s) => s.sprite === slimeSprite);
+
+    if (!slime) {
+      console.warn('Missing slime for sprite collision!');
+      return;
+    }
+
+    // Player attacks Slime
+    if (this.player!.isAttacking()) {
+      this.slimes = this.slimes.filter((s) => s != slime);
+      slime.kill();
+      return false;
+    }
+
+    return;
   }
 
   private slimePlayerCollide(

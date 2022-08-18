@@ -65,12 +65,14 @@ export default class Map {
               const isFirstY = y === 0;
               const isLastY = y === room.height - 1;
 
-              tileVertileLine.push({
+              const line: TileObject = {
                 x: x,
                 y: y,
                 type:
                   isFirstX || isLastX || isFirstY || isLastY ? 'wall' : 'floor',
-              });
+              };
+
+              tileVertileLine.push(line);
             }
 
             acc.push(tileVertileLine);
@@ -78,7 +80,7 @@ export default class Map {
 
           return acc;
         },
-        []
+        [] as Array<Array<TileObject>>
       );
 
       dungeon = {

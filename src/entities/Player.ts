@@ -25,8 +25,12 @@ interface Keys {
   d: Phaser.Input.Keyboard.Key;
 }
 
+const playerSizeX = 8;
+const playerSizeY = 8;
+
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
+  public hitBox: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private keys: Keys;
 
   private stats: PlayerStats;
@@ -57,11 +61,20 @@ export default class Player {
 
     this.scene = scene;
     this.sprite = scene.physics.add.sprite(x, y, Graphics.player.name, 0);
-    this.sprite.setSize(8, 8);
+    this.sprite.setSize(playerSizeX, playerSizeY);
     this.sprite.setOffset(20, 28);
     this.sprite.anims.play(Graphics.player.animations.idle.key);
     this.facingUp = false;
     this.sprite.setDepth(5);
+
+    this.hitBox = scene.physics.add.sprite(
+      this.sprite.x,
+      this.sprite.y + playerSizeY * 2.25,
+      'Player',
+      0
+    );
+
+    this.hitBox.setSize(playerSizeX * 2, playerSizeY * 2);
 
     this.keys = scene.input.keyboard.addKeys({
       // Movement
@@ -265,16 +278,24 @@ export default class Player {
     this.lastDirection = this.getDirection({ left, right, up, down });
 
     if (!this.body.blocked.left && left) {
+      this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
+      this.hitBox.y = this.sprite.y;
       this.body.setVelocityX(-speed);
       this.sprite.setFlipX(true);
     } else if (!this.body.blocked.right && right) {
+      this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
+      this.hitBox.y = this.sprite.y;
       this.body.setVelocityX(speed);
       this.sprite.setFlipX(false);
     }
 
     if (!this.body.blocked.up && up) {
+      this.hitBox.x = this.sprite.x;
+      this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
       this.body.setVelocityY(-speed);
     } else if (!this.body.blocked.down && down) {
+      this.hitBox.x = this.sprite.x;
+      this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
       this.body.setVelocityY(speed);
     }
 
