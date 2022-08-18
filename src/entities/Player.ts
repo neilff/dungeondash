@@ -38,8 +38,8 @@ export default class Player {
   private attackUntil: number;
   private staggerUntil: number;
   private attackLockedUntil: number;
-  private emitter: Phaser.GameObjects.Particles.ParticleEmitter;
-  private flashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  private specialAttackEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  private damageEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
   private body: Phaser.Physics.Arcade.Body;
   private attacking: boolean;
   private time: number;
@@ -103,7 +103,7 @@ export default class Player {
 
     particles.setDepth(6);
 
-    this.emitter = particles.createEmitter({
+    this.specialAttackEmitter = particles.createEmitter({
       alpha: { start: 0.7, end: 0, ease: 'Cubic.easeOut' },
       follow: this.sprite,
       quantity: 1,
@@ -115,9 +115,9 @@ export default class Player {
       },
     });
 
-    this.emitter.stop();
+    this.specialAttackEmitter.stop();
 
-    this.flashEmitter = particles.createEmitter({
+    this.damageEmitter = particles.createEmitter({
       alpha: { start: 0.5, end: 0, ease: 'Cubic.easeOut' },
       follow: this.sprite,
       quantity: 1,
@@ -128,7 +128,7 @@ export default class Player {
       },
     });
 
-    this.flashEmitter.stop();
+    this.damageEmitter.stop();
 
     this.body = <Phaser.Physics.Arcade.Body>this.sprite.body;
     this.time = 0;
@@ -136,7 +136,7 @@ export default class Player {
     // Allows other objects to subscribe to changes to the players stats
     this.scene.registry.set('playerStats', this.stats);
 
-    // The event emitter allows us to communicate changes that occur to
+    // The event specialAttackEmitter allows us to communicate changes that occur to
     // the player from external sources. For example, when a power up is
     // picked up, we emit an event to notify the game that the player's
     // stats should be changed.
@@ -203,7 +203,7 @@ export default class Player {
       time + specialAttackDuration + specialAttackCooldown;
     this.body.velocity.normalize().scale(attackSpeed);
     this.sprite.anims.play(attackAnim, true);
-    this.emitter.start();
+    this.specialAttackEmitter.start();
     this.sprite.setBlendMode(Phaser.BlendModes.ADD);
     this.attacking = true;
   }
@@ -213,6 +213,7 @@ export default class Player {
     this.attackLockedUntil = time + slashDuration + slashCooldown;
     // this.body.velocity.normalize().scale(attackSpeed);
     this.sprite.anims.play(attackAnim, true);
+    this.specialAttackEmitter.start();
     this.attacking = true;
   }
 
@@ -261,7 +262,7 @@ export default class Player {
       }
       this.sprite.anims.play(Graphics.player.animations.stagger.key);
 
-      this.flashEmitter.start();
+      this.damageEmitter.start();
     }
 
     if (time < this.attackUntil || time < this.staggerUntil) {
@@ -342,12 +343,12 @@ export default class Player {
     this.body.velocity.normalize().scale(speed);
     this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
 
-    if (this.emitter.on) {
-      this.emitter.stop();
+    if (this.specialAttackEmitter.on) {
+      this.specialAttackEmitter.stop();
     }
 
-    if (this.flashEmitter.on) {
-      this.flashEmitter.stop();
+    if (this.damageEmitter.on) {
+      this.damageEmitter.stop();
     }
   }
 }
