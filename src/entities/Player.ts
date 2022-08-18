@@ -12,6 +12,8 @@ const slashCooldown = specialAttackCooldown / 2;
 const staggerDuration = 200;
 const staggerSpeed = 100;
 
+type Direction = 'up' | 'down' | 'left' | 'right';
+
 interface Keys {
   up: Phaser.Input.Keyboard.Key;
   down: Phaser.Input.Keyboard.Key;
@@ -31,6 +33,7 @@ const playerSizeY = 8;
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public hitBox: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  public directionIndicator: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private keys: Keys;
 
   private stats: PlayerStats;
@@ -44,10 +47,12 @@ export default class Player {
   private attacking: boolean;
   private time: number;
   private staggered: boolean;
+  // Pointer angle relative to the player sprite
+  private pointerAngle: number;
+  private pointerLocation: { x: number; y: number };
   private scene: Phaser.Scene;
   private facingUp: boolean;
   private eventEmitter: Phaser.Events.EventEmitter;
-  private lastDirection: 'left' | 'right' | 'up' | 'down' | 'idle';
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
@@ -67,14 +72,41 @@ export default class Player {
     this.facingUp = false;
     this.sprite.setDepth(5);
 
-    this.hitBox = scene.physics.add.sprite(
-      this.sprite.x,
-      this.sprite.y + playerSizeY * 2.25,
-      'Player',
-      0
-    );
+    this.hitBox = scene.physics.add
+      .sprite(this.sprite.x, this.sprite.y + playerSizeY * 2.25, 'Player', 0)
+      .setSize(playerSizeX * 2, playerSizeY * 2);
 
-    this.hitBox.setSize(playerSizeX * 2, playerSizeY * 2);
+    this.directionIndicator = scene.physics.add
+      .sprite(0, 0, 'cursor', 0)
+      .setVisible(false);
+
+    this.directionIndicator.setSize(24, 24);
+
+    this.text = scene.add.text(10, 150, 'Hello World').setDepth(10);
+
+    this.pointerAngle = 0;
+    this.pointerLocation = { x: 0, y: 0 };
+
+    this.scene.input.on(
+      'pointermove',
+      (pointer: { worldX: number; worldY: number }) => {
+        this.pointerAngle = Phaser.Math.RadToDeg(
+          Phaser.Math.Angle.BetweenPoints(this.sprite, {
+            x: pointer.worldX,
+            y: pointer.worldY,
+          })
+        );
+
+        this.text.setText(this.convertAngleToDirection(this.pointerAngle));
+
+        this.pointerLocation.x = pointer.worldX;
+        this.pointerLocation.y = pointer.worldY;
+
+        this.directionIndicator
+          .setPosition(pointer.worldX, pointer.worldY)
+          .setVisible(true);
+      }
+    );
 
     this.keys = scene.input.keyboard.addKeys({
       // Movement
@@ -92,7 +124,6 @@ export default class Player {
       f: 'f',
     }) as Keys;
 
-    this.lastDirection = 'down';
     this.attackUntil = 0;
     this.attackLockedUntil = 0;
     this.attacking = false;
@@ -197,6 +228,18 @@ export default class Player {
     }
   }
 
+  private convertAngleToDirection(angle: number): Direction {
+    if (angle >= -45 && angle < 45) {
+      return 'right';
+    } else if (angle >= 45 && angle < 135) {
+      return 'down';
+    } else if (angle >= 135 || angle < -135) {
+      return 'left';
+    } else {
+      return 'up';
+    }
+  }
+
   private performSpecialAttack(time: number, attackAnim: string): void {
     this.attackUntil = time + specialAttackDuration;
     this.attackLockedUntil =
@@ -215,24 +258,6 @@ export default class Player {
     this.sprite.anims.play(attackAnim, true);
     this.specialAttackEmitter.start();
     this.attacking = true;
-  }
-
-  private getDirection({
-    left,
-    right,
-    up,
-    down,
-  }: {
-    left: boolean;
-    right: boolean;
-    up: boolean;
-    down: boolean;
-  }) {
-    if (left) return 'left';
-    if (right) return 'right';
-    if (up) return 'up';
-    if (down) return 'down';
-    return this.lastDirection;
   }
 
   update(time: number) {
@@ -271,58 +296,112 @@ export default class Player {
 
     this.body.setVelocity(0);
 
-    const left = keys.left.isDown || keys.a.isDown;
-    const right = keys.right.isDown || keys.d.isDown;
-    const up = keys.up.isDown || keys.w.isDown;
-    const down = keys.down.isDown || keys.s.isDown;
+    const left = keys.left.isDown;
+    const right = keys.right.isDown;
+    const up = keys.up.isDown;
+    const down = keys.down.isDown;
 
-    this.lastDirection = this.getDirection({ left, right, up, down });
+    const forward = keys.w.isDown;
+    const backward = keys.s.isDown;
+    const strafeLeft = keys.a.isDown;
+    const strafeRight = keys.d.isDown;
 
-    if (!this.body.blocked.left && left) {
+    const distanceBetweenPointerAndPlayer = Phaser.Math.Distance.BetweenPoints(
+      this.sprite,
+      this.pointerLocation
+    );
+
+    const speedMultiplier =
+      distanceBetweenPointerAndPlayer > 100
+        ? 1
+        : distanceBetweenPointerAndPlayer / 100;
+
+    const pointerDirection = this.convertAngleToDirection(this.pointerAngle);
+    const isMoving =
+      (forward || backward || strafeLeft || strafeRight) &&
+      distanceBetweenPointerAndPlayer > 5;
+
+    if (!this.body.blocked.left && pointerDirection === 'left') {
       this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-      this.body.setVelocityX(-speed);
+      this.facingUp = false;
       this.sprite.setFlipX(true);
-    } else if (!this.body.blocked.right && right) {
+      moveAnim = isMoving
+        ? Graphics.player.animations.walk.key
+        : Graphics.player.animations.idle.key;
+      attackAnim = Graphics.player.animations.slash.key;
+    } else if (!this.body.blocked.right && pointerDirection === 'right') {
       this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-      this.body.setVelocityX(speed);
+      this.facingUp = false;
       this.sprite.setFlipX(false);
+      moveAnim = isMoving
+        ? Graphics.player.animations.walk.key
+        : Graphics.player.animations.idle.key;
+      attackAnim = Graphics.player.animations.slash.key;
     }
 
-    if (!this.body.blocked.up && up) {
+    if (!this.body.blocked.up && pointerDirection === 'up') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
-      this.body.setVelocityY(-speed);
-    } else if (!this.body.blocked.down && down) {
+      this.facingUp = true;
+      moveAnim = isMoving
+        ? Graphics.player.animations.walkBack.key
+        : Graphics.player.animations.idleBack.key;
+      attackAnim = Graphics.player.animations.slashUp.key;
+    } else if (!this.body.blocked.down && pointerDirection === 'down') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
-      this.body.setVelocityY(speed);
+      this.facingUp = false;
+      moveAnim = isMoving
+        ? Graphics.player.animations.walk.key
+        : Graphics.player.animations.idle.key;
+      attackAnim = Graphics.player.animations.slashDown.key;
     }
 
-    if (left || right) {
-      moveAnim = Graphics.player.animations.walk.key;
-      attackAnim = Graphics.player.animations.slash.key;
-      this.facingUp = false;
-    } else if (down) {
-      moveAnim = Graphics.player.animations.walk.key;
-      attackAnim = Graphics.player.animations.slashDown.key;
-      this.facingUp = false;
-    } else if (up) {
-      moveAnim = Graphics.player.animations.walkBack.key;
-      attackAnim = Graphics.player.animations.slashUp.key;
-      this.facingUp = true;
-    } else if (this.facingUp) {
-      moveAnim = Graphics.player.animations.idleBack.key;
-      attackAnim = Graphics.player.animations.slashUp.key;
-    } else {
-      const isFacingHorizontal =
-        this.lastDirection === 'left' || this.lastDirection === 'right';
-      moveAnim = Graphics.player.animations.idle.key;
-      attackAnim = isFacingHorizontal
-        ? Graphics.player.animations.slash.key
-        : Graphics.player.animations.slashDown.key;
+    console.log({ speed: speed * speedMultiplier });
+
+    if (isMoving && forward) {
+      this.scene.physics.moveTo(
+        this.sprite,
+        this.pointerLocation.x,
+        this.pointerLocation.y,
+        speed * speedMultiplier
+      );
     }
+
+    if (isMoving && backward) {
+      this.scene.physics.moveTo(
+        this.sprite,
+        -this.pointerLocation.x,
+        -this.pointerLocation.y,
+        speed
+      );
+    }
+
+    // if (left || right) {
+    //   moveAnim = Graphics.player.animations.walk.key;
+    //   attackAnim = Graphics.player.animations.slash.key;
+    //   this.facingUp = false;
+    // } else if (down) {
+    //   moveAnim = Graphics.player.animations.walk.key;
+    //   attackAnim = Graphics.player.animations.slashDown.key;
+    //   this.facingUp = false;
+    // } else if (up) {
+    //   moveAnim = Graphics.player.animations.walkBack.key;
+    //   attackAnim = Graphics.player.animations.slashUp.key;
+    //   this.facingUp = true;
+    // } else if (this.facingUp) {
+    //   moveAnim = Graphics.player.animations.idleBack.key;
+    //   attackAnim = Graphics.player.animations.slashUp.key;
+    // } else {
+    //   const isFacingHorizontal =
+    //     pointerDirection === 'left' || pointerDirection === 'right';
+    //   moveAnim = Graphics.player.animations.idle.key;
+    //   attackAnim = isFacingHorizontal
+    //     ? Graphics.player.animations.slash.key
+    //     : Graphics.player.animations.slashDown.key;
+    // }
 
     if (
       keys.space!.isDown &&
