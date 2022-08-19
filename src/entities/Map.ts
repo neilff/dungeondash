@@ -132,8 +132,8 @@ export default class Map {
     const roomNumber = Math.floor(Math.random() * dungeon!.rooms.length);
 
     if (options.enableDebugMode) {
-      this.startingX = 2;
-      this.startingY = 2;
+      this.startingX = 5;
+      this.startingY = 15;
     } else {
       const firstRoom = dungeon!.rooms[roomNumber];
 

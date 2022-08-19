@@ -29,6 +29,8 @@ export default class PreloaderScene extends Phaser.Scene {
       frameHeight: Graphics.items.height,
       frameWidth: Graphics.items.width,
     });
+
+    this.load.image(Graphics.debugArrow.name, Graphics.debugArrow.file);
   }
 
   create(): void {

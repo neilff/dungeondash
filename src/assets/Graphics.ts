@@ -4,6 +4,7 @@ import RoguePlayer from '../../assets/fongoose/RoguePlayer_48x48.png';
 import RogueSlime from '../../assets/fongoose/RogueSlime32x32.png';
 import RogueItems from '../../assets/fongoose/RogueItems16x16.png';
 import Util from '../../assets/Util.png';
+import DebugArrow from '../../assets/debug/longarrow-white.png';
 
 type AnimConfig = {
   key: string;
@@ -205,6 +206,11 @@ const util = {
   },
 };
 
+const debugArrow = {
+  name: 'debugArrow',
+  file: DebugArrow,
+};
+
 export default {
   environment,
   player,
@@ -212,4 +218,5 @@ export default {
   items,
   util,
   interactive,
+  debugArrow,
 };

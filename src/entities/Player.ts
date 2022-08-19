@@ -3,6 +3,8 @@ import Graphics from '../assets/Graphics';
 import EventsCenter, { eventTypes } from '../events/EventsCenter';
 import { ItemType, PlayerStats } from '../utils/types';
 
+const Animations = Graphics.player.animations;
+
 const speed = 125;
 const attackSpeed = 500;
 const specialAttackDuration = 165;
@@ -12,13 +14,17 @@ const slashCooldown = specialAttackCooldown / 2;
 const staggerDuration = 200;
 const staggerSpeed = 100;
 
-type Direction = 'up' | 'down' | 'left' | 'right';
+type Direction =
+  | 'north'
+  | 'north-east'
+  | 'east'
+  | 'south-east'
+  | 'south'
+  | 'south-west'
+  | 'west'
+  | 'north-west';
 
 interface Keys {
-  up: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
   f: Phaser.Input.Keyboard.Key;
   w: Phaser.Input.Keyboard.Key;
@@ -49,10 +55,12 @@ export default class Player {
   private staggered: boolean;
   // Pointer angle relative to the player sprite
   private pointerAngle: number;
+  private pointerRadians: number;
   private pointerLocation: { x: number; y: number };
   private scene: Phaser.Scene;
-  private facingUp: boolean;
   private eventEmitter: Phaser.Events.EventEmitter;
+  private aimRadius: Phaser.GameObjects.Arc;
+  private aimBox: Phaser.GameObjects.Rectangle;
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
@@ -64,17 +72,25 @@ export default class Player {
       stamina: 0,
     };
 
+    this.aimRadius = scene.add.circle(x, y, 50, 0x222222, 0.25).setDepth(10);
+    const circleTop = this.aimRadius.getTopCenter();
+    this.aimBox = scene.add
+      .rectangle(circleTop.x, circleTop.y, 10, 10, 0x222222, 1)
+      .setDepth(10);
+
     this.scene = scene;
     this.sprite = scene.physics.add.sprite(x, y, Graphics.player.name, 0);
     this.sprite.setSize(playerSizeX, playerSizeY);
     this.sprite.setOffset(20, 28);
-    this.sprite.anims.play(Graphics.player.animations.idle.key);
-    this.facingUp = false;
+    this.sprite.anims.play(Animations.idle.key);
     this.sprite.setDepth(5);
 
     this.hitBox = scene.physics.add
       .sprite(this.sprite.x, this.sprite.y + playerSizeY * 2.25, 'Player', 0)
       .setSize(playerSizeX * 2, playerSizeY * 2);
+
+    this.hitBox.x = x;
+    this.hitBox.y = y;
 
     this.directionIndicator = scene.physics.add
       .sprite(0, 0, 'cursor', 0)
@@ -82,22 +98,19 @@ export default class Player {
 
     this.directionIndicator.setSize(24, 24);
 
-    this.text = scene.add.text(10, 150, 'Hello World').setDepth(10);
-
     this.pointerAngle = 0;
+    this.pointerRadians = 0;
     this.pointerLocation = { x: 0, y: 0 };
 
     this.scene.input.on(
       'pointermove',
       (pointer: { worldX: number; worldY: number }) => {
-        this.pointerAngle = Phaser.Math.RadToDeg(
-          Phaser.Math.Angle.BetweenPoints(this.sprite, {
-            x: pointer.worldX,
-            y: pointer.worldY,
-          })
-        );
+        this.pointerRadians = Phaser.Math.Angle.BetweenPoints(this.sprite, {
+          x: pointer.worldX,
+          y: pointer.worldY,
+        });
 
-        this.text.setText(this.convertAngleToDirection(this.pointerAngle));
+        this.pointerAngle = Phaser.Math.RadToDeg(this.pointerRadians);
 
         this.pointerLocation.x = pointer.worldX;
         this.pointerLocation.y = pointer.worldY;
@@ -228,16 +241,32 @@ export default class Player {
     }
   }
 
+  private getCircleXY(r: number, radians: number): { x: number; y: number } {
+    return { x: -r * Math.cos(radians), y: -r * Math.sin(radians) };
+  }
+
   private convertAngleToDirection(angle: number): Direction {
-    if (angle >= -45 && angle < 45) {
-      return 'right';
-    } else if (angle >= 45 && angle < 135) {
-      return 'down';
-    } else if (angle >= 135 || angle < -135) {
-      return 'left';
-    } else {
-      return 'up';
+    let direction = null;
+
+    switch (true) {
+      case angle >= -67.5 && angle < -22.5:
+        direction = 'north';
+        break;
+      case angle >= -22.5 && angle < 22.5:
+        direction = 'east';
+        break;
+      case angle >= 22.5 && angle < 67.5:
+        direction = 'south';
+        break;
+      case angle >= 67.5 || angle < -67.5:
+        direction = 'west';
+        break;
+      default:
+        direction = 'none';
+        break;
     }
+
+    return direction as Direction;
   }
 
   private performSpecialAttack(time: number, attackAnim: string): void {
@@ -261,6 +290,8 @@ export default class Player {
   }
 
   update(time: number) {
+    const blocked = this.body.blocked;
+
     this.time = time;
 
     const keys = this.keys;
@@ -274,18 +305,24 @@ export default class Player {
 
       this.body.setVelocity(0);
 
-      if (this.body.touching.down) {
-        this.body.setVelocityY(-staggerSpeed);
-      } else if (this.body.touching.up) {
-        this.body.setVelocityY(staggerSpeed);
-      } else if (this.body.touching.left) {
-        this.body.setVelocityX(staggerSpeed);
-        this.sprite.setFlipX(true);
-      } else if (this.body.touching.right) {
-        this.body.setVelocityX(-staggerSpeed);
-        this.sprite.setFlipX(false);
+      switch (true) {
+        case this.body.touching.up:
+          this.body.setVelocityY(staggerSpeed);
+          break;
+        case this.body.touching.down:
+          this.body.setVelocityY(-staggerSpeed);
+          break;
+        case this.body.touching.left:
+          this.body.setVelocityX(staggerSpeed);
+          this.sprite.setFlipX(true);
+          break;
+        case this.body.touching.right:
+          this.body.setVelocityX(-staggerSpeed);
+          this.sprite.setFlipX(false);
+          break;
       }
-      this.sprite.anims.play(Graphics.player.animations.stagger.key);
+
+      this.sprite.anims.play(Animations.stagger.key);
 
       this.damageEmitter.start();
     }
@@ -295,11 +332,6 @@ export default class Player {
     }
 
     this.body.setVelocity(0);
-
-    const left = keys.left.isDown;
-    const right = keys.right.isDown;
-    const up = keys.up.isDown;
-    const down = keys.down.isDown;
 
     const forward = keys.w.isDown;
     const backward = keys.s.isDown;
@@ -311,100 +343,79 @@ export default class Player {
       this.pointerLocation
     );
 
-    const speedMultiplier =
-      distanceBetweenPointerAndPlayer > 100
-        ? 1
-        : distanceBetweenPointerAndPlayer / 100;
-
+    // Pointer direction relative to the character in the world
     const pointerDirection = this.convertAngleToDirection(this.pointerAngle);
     const isMoving =
       (forward || backward || strafeLeft || strafeRight) &&
       distanceBetweenPointerAndPlayer > 5;
 
-    if (!this.body.blocked.left && pointerDirection === 'left') {
+    // Setup the animation for the user based on the direction they are facing
+    switch (true) {
+      case !blocked.left && pointerDirection === 'west':
+        this.sprite.setFlipX(true);
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slash.key;
+        break;
+      case !blocked.right && pointerDirection === 'east':
+        this.sprite.setFlipX(false);
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slash.key;
+        break;
+      case !blocked.up && pointerDirection === 'north':
+        moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
+        attackAnim = Animations.slashUp.key;
+        break;
+      case !blocked.down && pointerDirection === 'south':
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slashDown.key;
+        break;
+    }
+
+    if (!this.body.blocked.left && pointerDirection === 'west') {
       this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-      this.facingUp = false;
-      this.sprite.setFlipX(true);
-      moveAnim = isMoving
-        ? Graphics.player.animations.walk.key
-        : Graphics.player.animations.idle.key;
-      attackAnim = Graphics.player.animations.slash.key;
-    } else if (!this.body.blocked.right && pointerDirection === 'right') {
+    } else if (!this.body.blocked.right && pointerDirection === 'east') {
       this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-      this.facingUp = false;
-      this.sprite.setFlipX(false);
-      moveAnim = isMoving
-        ? Graphics.player.animations.walk.key
-        : Graphics.player.animations.idle.key;
-      attackAnim = Graphics.player.animations.slash.key;
-    }
-
-    if (!this.body.blocked.up && pointerDirection === 'up') {
+    } else if (!this.body.blocked.up && pointerDirection === 'north') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
-      this.facingUp = true;
-      moveAnim = isMoving
-        ? Graphics.player.animations.walkBack.key
-        : Graphics.player.animations.idleBack.key;
-      attackAnim = Graphics.player.animations.slashUp.key;
-    } else if (!this.body.blocked.down && pointerDirection === 'down') {
+    } else if (!this.body.blocked.down && pointerDirection === 'south') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
-      this.facingUp = false;
-      moveAnim = isMoving
-        ? Graphics.player.animations.walk.key
-        : Graphics.player.animations.idle.key;
-      attackAnim = Graphics.player.animations.slashDown.key;
     }
 
-    console.log({ speed: speed * speedMultiplier });
+    this.aimRadius.x = this.sprite.x;
+    this.aimRadius.y = this.sprite.y;
+
+    const circleCoords = this.getCircleXY(
+      this.aimRadius.radius,
+      this.pointerRadians
+    );
+
+    this.aimBox.x = this.aimRadius.x - circleCoords.x;
+    this.aimBox.y = this.aimRadius.y - circleCoords.y;
 
     if (isMoving && forward) {
       this.scene.physics.moveTo(
         this.sprite,
-        this.pointerLocation.x,
-        this.pointerLocation.y,
-        speed * speedMultiplier
+        this.aimBox.x,
+        this.aimBox.y,
+        speed
       );
     }
 
     if (isMoving && backward) {
       this.scene.physics.moveTo(
         this.sprite,
-        -this.pointerLocation.x,
-        -this.pointerLocation.y,
+        -this.aimBox.x,
+        -this.aimBox.y,
         speed
       );
     }
 
-    // if (left || right) {
-    //   moveAnim = Graphics.player.animations.walk.key;
-    //   attackAnim = Graphics.player.animations.slash.key;
-    //   this.facingUp = false;
-    // } else if (down) {
-    //   moveAnim = Graphics.player.animations.walk.key;
-    //   attackAnim = Graphics.player.animations.slashDown.key;
-    //   this.facingUp = false;
-    // } else if (up) {
-    //   moveAnim = Graphics.player.animations.walkBack.key;
-    //   attackAnim = Graphics.player.animations.slashUp.key;
-    //   this.facingUp = true;
-    // } else if (this.facingUp) {
-    //   moveAnim = Graphics.player.animations.idleBack.key;
-    //   attackAnim = Graphics.player.animations.slashUp.key;
-    // } else {
-    //   const isFacingHorizontal =
-    //     pointerDirection === 'left' || pointerDirection === 'right';
-    //   moveAnim = Graphics.player.animations.idle.key;
-    //   attackAnim = isFacingHorizontal
-    //     ? Graphics.player.animations.slash.key
-    //     : Graphics.player.animations.slashDown.key;
-    // }
-
     if (
-      keys.space!.isDown &&
+      keys.space.isDown &&
       time > this.attackLockedUntil &&
       this.body.velocity.length() > 0
     ) {
@@ -412,7 +423,10 @@ export default class Player {
       return;
     }
 
-    if (keys.f.isDown && time > this.attackLockedUntil) {
+    if (
+      (keys.f.isDown || this.scene.input.activePointer.leftButtonDown()) &&
+      time > this.attackLockedUntil
+    ) {
       this.performSlash(time, attackAnim);
       return;
     }
