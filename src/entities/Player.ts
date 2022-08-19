@@ -74,8 +74,10 @@ export default class Player {
 
     this.aimRadius = scene.add.circle(x, y, 50, 0x222222, 0.25).setDepth(10);
     const circleTop = this.aimRadius.getTopCenter();
+
+    // TODO (neilff): Can this become a physics object?
     this.aimBox = scene.add
-      .rectangle(circleTop.x, circleTop.y, 10, 10, 0x222222, 1)
+      .rectangle(circleTop.x, circleTop.y, 25, 25, 0x222222, 1)
       .setDepth(10);
 
     this.scene = scene;
@@ -395,6 +397,7 @@ export default class Player {
 
     this.aimBox.x = this.aimRadius.x - circleCoords.x;
     this.aimBox.y = this.aimRadius.y - circleCoords.y;
+    this.aimBox.rotation = this.pointerRadians;
 
     if (isMoving && forward) {
       this.scene.physics.moveTo(
