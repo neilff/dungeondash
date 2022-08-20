@@ -61,6 +61,8 @@ export default class Player {
   private aimRadius: Phaser.GameObjects.Arc;
   private aimBox: Phaser.GameObjects.Rectangle;
 
+  private enableDebugMode: boolean;
+
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
       maxHP: 100,
@@ -71,12 +73,23 @@ export default class Player {
       stamina: 0,
     };
 
-    this.aimRadius = scene.add.circle(x, y, 50, 0x222222, 0.25).setDepth(10);
+    this.enableDebugMode = true;
+
+    this.aimRadius = scene.add
+      .circle(x, y, 10, 0x222222, this.enableDebugMode ? 0.25 : 0)
+      .setDepth(10);
     const circleTop = this.aimRadius.getTopCenter();
 
     // TODO (neilff): Can this become a physics object?
     this.aimBox = scene.add
-      .rectangle(circleTop.x, circleTop.y, 25, 25, 0x222222, 1)
+      .rectangle(
+        circleTop.x,
+        circleTop.y,
+        25,
+        25,
+        0x222222,
+        this.enableDebugMode ? 0.75 : 0
+      )
       .setDepth(10);
 
     this.scene = scene;
@@ -351,43 +364,44 @@ export default class Player {
 
     // Setup the animation for the user based on the direction they are facing
     switch (true) {
-      case !blocked.left &&
-        (direction === 'west' || direction === 'south-west'):
-        this.sprite.setFlipX(true);
-        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
-        attackAnim = Animations.slash.key;
-        break;
-      case !blocked.right &&
-        (direction === 'east' || direction === 'south-east'):
+      case !blocked.right && direction === 'east':
         this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
-        break;
-      case !blocked.up &&
-        (direction === 'north' ||
-          direction === 'north-west' ||
-          direction === 'north-east'):
-        moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
-        attackAnim = Animations.slashUp.key;
         break;
       case !blocked.down && direction === 'south':
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
+      case !blocked.left && direction === 'west':
+        this.sprite.setFlipX(true);
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slash.key;
+        break;
+      case !blocked.up && direction === 'north':
+        moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
+        attackAnim = Animations.slashUp.key;
+        break;
     }
 
-    if (!this.body.blocked.left && direction === 'west') {
-      this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
-      this.hitBox.y = this.sprite.y;
-    } else if (!this.body.blocked.right && direction === 'east') {
-      this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
-      this.hitBox.y = this.sprite.y;
-    } else if (!this.body.blocked.up && direction === 'north') {
-      this.hitBox.x = this.sprite.x;
-      this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
-    } else if (!this.body.blocked.down && direction === 'south') {
-      this.hitBox.x = this.sprite.x;
-      this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
+    switch (true) {
+      case !this.body.blocked.left && direction === 'west':
+        this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
+        this.hitBox.y = this.sprite.y;
+        break;
+      case !this.body.blocked.right && direction === 'east':
+        this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
+        this.hitBox.y = this.sprite.y;
+        backward;
+        break;
+      case !this.body.blocked.up && direction === 'north':
+        this.hitBox.x = this.sprite.x;
+        this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
+        break;
+      case !this.body.blocked.down && direction === 'south':
+        this.hitBox.x = this.sprite.x;
+        this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
+        break;
     }
 
     this.aimRadius.x = this.sprite.x;
