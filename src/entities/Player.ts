@@ -97,6 +97,9 @@ export default class Player {
     this.pointerRadians = 0;
     this.pointerLocation = { x: 0, y: 0 };
 
+    this.text = scene.add.text(x, y + 25, 'Hello World');
+    this.text.setDepth(10);
+
     this.scene.input.on(
       'pointermove',
       (pointer: { worldX: number; worldY: number }) => {
@@ -240,23 +243,35 @@ export default class Player {
     let direction = null;
 
     switch (true) {
-      case angle >= -67.5 && angle < -22.5:
-        direction = 'north';
-        break;
       case angle >= -22.5 && angle < 22.5:
         direction = 'east';
         break;
       case angle >= 22.5 && angle < 67.5:
+        direction = 'south-east';
+        break;
+      case angle >= 67.5 && angle < 112.5:
         direction = 'south';
         break;
-      case angle >= 67.5 || angle < -67.5:
+      case angle >= 112.5 && angle < 157.5:
+        direction = 'south-west';
+        break;
+      case angle >= 157.5 || angle < -157.5:
         direction = 'west';
         break;
-      default:
-        direction = 'none';
-        console.log('none');
+      case angle >= -157.5 && angle < -112.5:
+        direction = 'north-west';
         break;
+      case angle >= -112.5 && angle < -67.5:
+        direction = 'north';
+        break;
+      case angle >= -67.5 && angle < -22.5:
+        direction = 'north-east';
+        break;
+      default:
+        throw new Error(`No angle found for ${angle}`);
     }
+
+    this.text.setText(`Angle: ${angle}\n${direction}`);
 
     return direction as Direction;
   }
@@ -331,47 +346,55 @@ export default class Player {
     const strafeRight = keys.d.isDown;
 
     // Pointer direction relative to the character in the world
-    const pointerDirection = this.convertAngleToDirection(this.pointerAngle);
+    const direction = this.convertAngleToDirection(this.pointerAngle);
     const isMoving = forward || backward || strafeLeft || strafeRight;
 
     // Setup the animation for the user based on the direction they are facing
     switch (true) {
-      case !blocked.left && pointerDirection === 'west':
+      case !blocked.left &&
+        (direction === 'west' || direction === 'south-west'):
         this.sprite.setFlipX(true);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
-      case !blocked.right && pointerDirection === 'east':
+      case !blocked.right &&
+        (direction === 'east' || direction === 'south-east'):
         this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
-      case !blocked.up && pointerDirection === 'north':
+      case !blocked.up &&
+        (direction === 'north' ||
+          direction === 'north-west' ||
+          direction === 'north-east'):
         moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
         attackAnim = Animations.slashUp.key;
         break;
-      case !blocked.down && pointerDirection === 'south':
+      case !blocked.down && direction === 'south':
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
     }
 
-    if (!this.body.blocked.left && pointerDirection === 'west') {
+    if (!this.body.blocked.left && direction === 'west') {
       this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-    } else if (!this.body.blocked.right && pointerDirection === 'east') {
+    } else if (!this.body.blocked.right && direction === 'east') {
       this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
       this.hitBox.y = this.sprite.y;
-    } else if (!this.body.blocked.up && pointerDirection === 'north') {
+    } else if (!this.body.blocked.up && direction === 'north') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
-    } else if (!this.body.blocked.down && pointerDirection === 'south') {
+    } else if (!this.body.blocked.down && direction === 'south') {
       this.hitBox.x = this.sprite.x;
       this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
     }
 
     this.aimRadius.x = this.sprite.x;
     this.aimRadius.y = this.sprite.y;
+
+    this.text.x = this.sprite.x;
+    this.text.y = this.sprite.y + 25;
 
     const circleCoords = this.getCircleXY(
       this.aimRadius.radius,
