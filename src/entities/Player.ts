@@ -39,10 +39,11 @@ const playerSizeY = 8;
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public hitBox: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  private aimRadius: Phaser.GameObjects.Arc;
+
   private keys: Keys;
 
   private stats: PlayerStats;
-
   private attackUntil: number;
   private staggerUntil: number;
   private attackLockedUntil: number;
@@ -58,10 +59,9 @@ export default class Player {
   private pointerLocation: { x: number; y: number };
   private scene: Phaser.Scene;
   private eventEmitter: Phaser.Events.EventEmitter;
-  private aimRadius: Phaser.GameObjects.Arc;
-  private aimBox: Phaser.GameObjects.Rectangle;
 
   private enableDebugMode: boolean;
+  private debugText: Phaser.GameObjects.Text;
 
   constructor(x: number, y: number, scene: Phaser.Scene) {
     this.stats = {
@@ -75,43 +75,35 @@ export default class Player {
 
     this.enableDebugMode = true;
 
-    this.aimRadius = scene.add
-      .circle(x, y, 10, 0x222222, this.enableDebugMode ? 0.25 : 0)
-      .setDepth(10);
-    const circleTop = this.aimRadius.getTopCenter();
-
-    // TODO (neilff): Can this become a physics object?
-    this.aimBox = scene.add
-      .rectangle(
-        circleTop.x,
-        circleTop.y,
-        25,
-        25,
-        0x222222,
-        this.enableDebugMode ? 0.75 : 0
-      )
-      .setDepth(10);
-
     this.scene = scene;
+
+    // Draw the player sprite
     this.sprite = scene.physics.add.sprite(x, y, Graphics.player.name, 0);
     this.sprite.setSize(playerSizeX, playerSizeY);
     this.sprite.setOffset(20, 28);
     this.sprite.anims.play(Animations.idle.key);
     this.sprite.setDepth(5);
 
-    this.hitBox = scene.physics.add
-      .sprite(this.sprite.x, this.sprite.y + playerSizeY * 2.25, 'Player', 0)
-      .setSize(playerSizeX * 2, playerSizeY * 2);
+    // TODO (neilff) This value will determine how far the player can attack.
+    // We should adjust it based on the weapon they are holding.
+    const aimRadiusSize = 25;
 
-    this.hitBox.x = x;
-    this.hitBox.y = y;
+    // Draw the aim radius
+    this.aimRadius = scene.add
+      .circle(x, y, aimRadiusSize, 0x222222, this.enableDebugMode ? 0.25 : 0)
+      .setDepth(10);
+    const circleTop = this.aimRadius.getTopCenter();
+
+    this.hitBox = scene.physics.add
+      .sprite(circleTop.x, circleTop.y, 'nill', 0)
+      .setSize(playerSizeX * 2, playerSizeY * 2);
 
     this.pointerAngle = 0;
     this.pointerRadians = 0;
     this.pointerLocation = { x: 0, y: 0 };
 
-    this.text = scene.add.text(x, y + 25, 'Hello World');
-    this.text.setDepth(10);
+    this.debugText = scene.add.text(x, y + 25, 'Hello World');
+    this.debugText.setDepth(10);
 
     this.scene.input.on(
       'pointermove',
@@ -284,7 +276,7 @@ export default class Player {
         throw new Error(`No angle found for ${angle}`);
     }
 
-    this.text.setText(`Angle: ${angle}\n${direction}`);
+    this.debugText.setText(`Angle: ${angle}\n${direction}`);
 
     return direction as Direction;
   }
@@ -384,61 +376,31 @@ export default class Player {
         break;
     }
 
-    switch (true) {
-      case !this.body.blocked.left && direction === 'west':
-        this.hitBox.x = this.sprite.x - playerSizeX * 2.25;
-        this.hitBox.y = this.sprite.y;
-        break;
-      case !this.body.blocked.right && direction === 'east':
-        this.hitBox.x = this.sprite.x + playerSizeX * 2.25;
-        this.hitBox.y = this.sprite.y;
-        backward;
-        break;
-      case !this.body.blocked.up && direction === 'north':
-        this.hitBox.x = this.sprite.x;
-        this.hitBox.y = this.sprite.y - playerSizeY * 2.25;
-        break;
-      case !this.body.blocked.down && direction === 'south':
-        this.hitBox.x = this.sprite.x;
-        this.hitBox.y = this.sprite.y + playerSizeY * 2.25;
-        break;
-    }
-
     this.aimRadius.x = this.sprite.x;
     this.aimRadius.y = this.sprite.y;
 
-    this.text.x = this.sprite.x;
-    this.text.y = this.sprite.y + 25;
+    if (this.enableDebugMode) {
+      this.debugText.x = this.sprite.x;
+      this.debugText.y = this.sprite.y + 25;
+    }
 
     const circleCoords = this.getCircleXY(
       this.aimRadius.radius,
       this.pointerRadians
     );
 
-    this.aimBox.x = this.aimRadius.x - circleCoords.x;
-    this.aimBox.y = this.aimRadius.y - circleCoords.y;
-    this.aimBox.rotation = this.pointerRadians;
+    this.hitBox.x = this.aimRadius.x - circleCoords.x;
+    this.hitBox.y = this.aimRadius.y - circleCoords.y;
+    this.hitBox.rotation = this.pointerRadians;
 
-    const vec = this.scene.physics.velocityFromAngle(this.aimBox.angle, 100);
+    const vec = this.scene.physics.velocityFromAngle(this.hitBox.angle, speed);
 
     if (isMoving && forward) {
       this.sprite.setVelocity(vec.x, vec.y);
-
-      // this.scene.physics.moveTo(
-      //   this.sprite,
-      //   vec.x,
-      //   vec.y,
-      //   speed
-      // );
     }
 
     if (isMoving && backward) {
-      this.scene.physics.moveTo(
-        this.sprite,
-        -this.aimBox.x,
-        -this.aimBox.y,
-        speed
-      );
+      this.sprite.setVelocity(-vec.x, -vec.y);
     }
 
     if (
