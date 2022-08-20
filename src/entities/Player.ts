@@ -39,7 +39,6 @@ const playerSizeY = 8;
 export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public hitBox: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  public directionIndicator: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private keys: Keys;
 
   private stats: PlayerStats;
@@ -94,12 +93,6 @@ export default class Player {
     this.hitBox.x = x;
     this.hitBox.y = y;
 
-    this.directionIndicator = scene.physics.add
-      .sprite(0, 0, 'cursor', 0)
-      .setVisible(false);
-
-    this.directionIndicator.setSize(24, 24);
-
     this.pointerAngle = 0;
     this.pointerRadians = 0;
     this.pointerLocation = { x: 0, y: 0 };
@@ -116,10 +109,6 @@ export default class Player {
 
         this.pointerLocation.x = pointer.worldX;
         this.pointerLocation.y = pointer.worldY;
-
-        this.directionIndicator
-          .setPosition(pointer.worldX, pointer.worldY)
-          .setVisible(true);
       }
     );
 
@@ -265,6 +254,7 @@ export default class Player {
         break;
       default:
         direction = 'none';
+        console.log('none');
         break;
     }
 
@@ -340,16 +330,9 @@ export default class Player {
     const strafeLeft = keys.a.isDown;
     const strafeRight = keys.d.isDown;
 
-    const distanceBetweenPointerAndPlayer = Phaser.Math.Distance.BetweenPoints(
-      this.sprite,
-      this.pointerLocation
-    );
-
     // Pointer direction relative to the character in the world
     const pointerDirection = this.convertAngleToDirection(this.pointerAngle);
-    const isMoving =
-      (forward || backward || strafeLeft || strafeRight) &&
-      distanceBetweenPointerAndPlayer > 5;
+    const isMoving = forward || backward || strafeLeft || strafeRight;
 
     // Setup the animation for the user based on the direction they are facing
     switch (true) {
@@ -399,13 +382,17 @@ export default class Player {
     this.aimBox.y = this.aimRadius.y - circleCoords.y;
     this.aimBox.rotation = this.pointerRadians;
 
+    const vec = this.scene.physics.velocityFromAngle(this.aimBox.angle, 100);
+
     if (isMoving && forward) {
-      this.scene.physics.moveTo(
-        this.sprite,
-        this.aimBox.x,
-        this.aimBox.y,
-        speed
-      );
+      this.sprite.setVelocity(vec.x, vec.y);
+
+      // this.scene.physics.moveTo(
+      //   this.sprite,
+      //   vec.x,
+      //   vec.y,
+      //   speed
+      // );
     }
 
     if (isMoving && backward) {
