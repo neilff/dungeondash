@@ -124,11 +124,6 @@ export default class Player {
     );
 
     this.keys = scene.input.keyboard.addKeys({
-      // Movement
-      up: Phaser.Input.Keyboard.KeyCodes.UP,
-      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-      left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-      right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
       w: 'w',
       a: 'a',
       s: 's',
@@ -426,16 +421,37 @@ export default class Player {
       0.08
     );
 
-    const vec = this.scene.physics.velocityFromAngle(
-      this.directionPointer.angle,
-      speed
-    );
+    if (isMoving && strafeLeft) {
+      const vec = this.scene.physics.velocityFromAngle(
+        this.directionPointer.angle - 90,
+        speed
+      );
+
+      this.sprite.setVelocity(vec.x, vec.y);
+    }
+
+    if (isMoving && strafeRight) {
+      const vec = this.scene.physics.velocityFromAngle(
+        this.directionPointer.angle + 90,
+        speed
+      );
+
+      this.sprite.setVelocity(vec.x, vec.y);
+    }
 
     if (isMoving && forward) {
+      const vec = this.scene.physics.velocityFromAngle(
+        this.directionPointer.angle,
+        speed
+      );
       this.sprite.setVelocity(vec.x, vec.y);
     }
 
     if (isMoving && backward) {
+      const vec = this.scene.physics.velocityFromAngle(
+        this.directionPointer.angle,
+        speed
+      );
       this.sprite.setVelocity(-vec.x, -vec.y);
     }
 
