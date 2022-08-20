@@ -40,6 +40,11 @@ export default class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public hitBox: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private aimRadius: Phaser.GameObjects.Arc;
+  private directionPointer: Phaser.GameObjects.Rectangle;
+
+  // Pointer angle relative to the player sprite
+  private pointerAngle: number;
+  private pointerRadians: number;
 
   private keys: Keys;
 
@@ -53,10 +58,7 @@ export default class Player {
   private attacking: boolean;
   private time: number;
   private staggered: boolean;
-  // Pointer angle relative to the player sprite
-  private pointerAngle: number;
-  private pointerRadians: number;
-  private pointerLocation: { x: number; y: number };
+
   private scene: Phaser.Scene;
   private eventEmitter: Phaser.Events.EventEmitter;
 
@@ -73,7 +75,7 @@ export default class Player {
       stamina: 0,
     };
 
-    this.enableDebugMode = true;
+    this.enableDebugMode = false;
 
     this.scene = scene;
 
@@ -86,7 +88,7 @@ export default class Player {
 
     // TODO (neilff) This value will determine how far the player can attack.
     // We should adjust it based on the weapon they are holding.
-    const aimRadiusSize = 25;
+    const aimRadiusSize = 20;
 
     // Draw the aim radius
     this.aimRadius = scene.add
@@ -94,15 +96,19 @@ export default class Player {
       .setDepth(10);
     const circleTop = this.aimRadius.getTopCenter();
 
+    this.directionPointer = scene.add
+      .rectangle(x, y, 50, 3, 0x222222, this.enableDebugMode ? 0.85 : 0)
+      .setOrigin(-0.25, 0)
+      .setDepth(10);
+
     this.hitBox = scene.physics.add
       .sprite(circleTop.x, circleTop.y, 'nill', 0)
       .setSize(playerSizeX * 2, playerSizeY * 2);
 
     this.pointerAngle = 0;
     this.pointerRadians = 0;
-    this.pointerLocation = { x: 0, y: 0 };
 
-    this.debugText = scene.add.text(x, y + 25, 'Hello World');
+    this.debugText = scene.add.text(x, y + 25, '');
     this.debugText.setDepth(10);
 
     this.scene.input.on(
@@ -114,9 +120,6 @@ export default class Player {
         });
 
         this.pointerAngle = Phaser.Math.RadToDeg(this.pointerRadians);
-
-        this.pointerLocation.x = pointer.worldX;
-        this.pointerLocation.y = pointer.worldY;
       }
     );
 
@@ -276,7 +279,9 @@ export default class Player {
         throw new Error(`No angle found for ${angle}`);
     }
 
-    this.debugText.setText(`Angle: ${angle}\n${direction}`);
+    if (this.enableDebugMode) {
+      this.debugText.setText(`Angle: ${angle}\n${direction}`);
+    }
 
     return direction as Direction;
   }
@@ -361,7 +366,17 @@ export default class Player {
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
+      case !blocked.right && direction === 'south-east':
+        this.sprite.setFlipX(false);
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slashDown.key;
+        break;
       case !blocked.down && direction === 'south':
+        moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
+        attackAnim = Animations.slashDown.key;
+        break;
+      case !blocked.down && direction === 'south-west':
+        this.sprite.setFlipX(true);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
@@ -370,7 +385,17 @@ export default class Player {
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
+      case !blocked.left && direction === 'north-west':
+        this.sprite.setFlipX(true);
+        moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
+        attackAnim = Animations.slashUp.key;
+        break;
       case !blocked.up && direction === 'north':
+        moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
+        attackAnim = Animations.slashUp.key;
+        break;
+      case !blocked.up && direction === 'north-east':
+        this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
         attackAnim = Animations.slashUp.key;
         break;
@@ -393,7 +418,18 @@ export default class Player {
     this.hitBox.y = this.aimRadius.y - circleCoords.y;
     this.hitBox.rotation = this.pointerRadians;
 
-    const vec = this.scene.physics.velocityFromAngle(this.hitBox.angle, speed);
+    this.directionPointer.x = this.sprite.x;
+    this.directionPointer.y = this.sprite.y;
+    this.directionPointer.rotation = Phaser.Math.Angle.RotateTo(
+      this.directionPointer.rotation,
+      this.pointerRadians,
+      0.08
+    );
+
+    const vec = this.scene.physics.velocityFromAngle(
+      this.directionPointer.angle,
+      speed
+    );
 
     if (isMoving && forward) {
       this.sprite.setVelocity(vec.x, vec.y);
