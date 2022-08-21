@@ -75,7 +75,7 @@ export default class Player {
       stamina: 0,
     };
 
-    this.enableDebugMode = false;
+    this.enableDebugMode = scene.registry.get('devMode');
 
     this.scene = scene;
 

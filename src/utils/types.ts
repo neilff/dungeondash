@@ -10,3 +10,7 @@ export interface PlayerStats {
   maxStamina: number;
   stamina: number;
 }
+
+export interface GameWorldStats {
+  level: number;
+}

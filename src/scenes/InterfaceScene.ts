@@ -24,11 +24,13 @@ export default class InterfaceScene extends Phaser.Scene {
     if (time > this.lastUpdate! + 100) {
       const { HP, maxHP, MP, maxMP, stamina, maxStamina }: PlayerStats =
         this.registry.get('playerStats');
+      const currentLevel = this.registry.get('currentLevel');
 
       this.text!.setText([
         `HP: ${HP} / ${maxHP}` +
           `\nMP: ${MP} / ${maxMP}` +
-          `\nStamina: ${stamina} / ${maxStamina}`,
+          `\nStamina: ${stamina} / ${maxStamina}` +
+          `\nLevel: ${currentLevel}`,
       ]);
       this.lastUpdate = time;
     }

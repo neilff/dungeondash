@@ -14,7 +14,6 @@ const worldTileWidth = 25;
 export default class GameScene extends Phaser.Scene {
   lastX: number;
   lastY: number;
-  currentLevel: number;
   player: Player | null;
   slimes: Slime[];
   slimeGroup: Phaser.GameObjects.Group | null;
@@ -32,7 +31,6 @@ export default class GameScene extends Phaser.Scene {
 
   constructor() {
     super('GameScene');
-    this.currentLevel = 1;
     this.lastX = -1;
     this.lastY = -1;
     this.player = null;
@@ -49,13 +47,18 @@ export default class GameScene extends Phaser.Scene {
     this.enableDebugMode = false;
   }
 
+  init(props: { level: number }): void {
+    const { level = 1 } = props;
+    this.registry.set('currentLevel', level);
+  }
+
   create(): void {
     this.enableDebugMode = this.registry.get('devMode');
 
     this.scene.run('InterfaceScene');
 
     const map = new Map(
-      this.currentLevel,
+      this.registry.get('currentLevel'),
       worldTileWidth,
       worldTileHeight,
       this,
@@ -164,7 +167,11 @@ export default class GameScene extends Phaser.Scene {
         console.info('Player has died, clearing scene.');
       }
 
-      this.restart();
+      this.onDeath();
+    });
+
+    this.eventEmitter.on(eventTypes.GOTO_NEXT_LEVEL, () => {
+      this.onNextLevel();
     });
 
     this.renderDebugGraphics();
@@ -293,7 +300,14 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  private restart() {
+  private onNextLevel() {
+    const currentLevel = this.registry.get('currentLevel');
+    const nextLevel = currentLevel + 1;
+
+    this.scene.restart({ level: nextLevel });
+  }
+
+  private onDeath() {
     this.eventEmitter.off(eventTypes.PLAYER_DEATH);
 
     this.registry.reset(); // destroy registry

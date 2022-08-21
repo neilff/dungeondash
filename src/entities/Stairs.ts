@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Graphics from '../assets/Graphics';
-import EventsCenter from '../events/EventsCenter';
+import EventsCenter, { eventTypes } from '../events/EventsCenter';
 
 type StairsDirection = 'up' | 'down';
 
@@ -32,6 +32,6 @@ export default class Stairs {
   }
 
   activate(): void {
-    console.log('stairs activated: ', this.direction);
+    this.eventEmitter.emit(eventTypes.GOTO_NEXT_LEVEL);
   }
 }
