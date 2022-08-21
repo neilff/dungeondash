@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import Graphics from '../assets/Graphics';
 import EventsCenter, { eventTypes } from '../events/EventsCenter';
-import { ItemType, PlayerStats } from '../utils/types';
+import { ItemType } from '../utils/types';
+import { PlayerStats } from '../data/playerData';
 
 const Animations = Graphics.player.animations;
 
@@ -65,15 +66,13 @@ export default class Player {
   private enableDebugMode: boolean;
   private debugText: Phaser.GameObjects.Text;
 
-  constructor(x: number, y: number, scene: Phaser.Scene) {
-    this.stats = {
-      maxHP: 100,
-      HP: 100,
-      maxMP: 10,
-      MP: 0,
-      maxStamina: 50,
-      stamina: 0,
-    };
+  constructor(
+    playerStats: PlayerStats,
+    x: number,
+    y: number,
+    scene: Phaser.Scene
+  ) {
+    this.stats = playerStats;
 
     this.enableDebugMode = scene.registry.get('devMode');
 

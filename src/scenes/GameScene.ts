@@ -6,6 +6,7 @@ import Slime from '../entities/Slime';
 import Stairs from '../entities/Stairs';
 import Map from '../entities/Map';
 import Powerup from '../entities/Powerup';
+import playerData from '../data/playerData';
 import EventsCenter, { eventTypes } from '../events/EventsCenter';
 
 const worldTileHeight = 25;
@@ -75,6 +76,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.player = new Player(
+      playerData,
       this.tilemap.tileToWorldX(map.startingX),
       this.tilemap.tileToWorldY(map.startingY),
       this
