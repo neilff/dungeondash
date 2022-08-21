@@ -172,9 +172,12 @@ export default class GameScene extends Phaser.Scene {
       this.onDeath();
     });
 
-    this.eventEmitter.on(eventTypes.GOTO_NEXT_LEVEL, () => {
-      this.onNextLevel();
-    });
+    this.eventEmitter.on(
+      eventTypes.CHANGE_LEVEL,
+      ({ direction }: { direction: 'up' | 'down' }) => {
+        this.onChangeLevel(direction);
+      }
+    );
 
     this.renderDebugGraphics();
   }
@@ -302,9 +305,10 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  private onNextLevel() {
+  private onChangeLevel(direction: 'up' | 'down') {
     const currentLevel = this.registry.get('currentLevel');
-    const nextLevel = currentLevel + 1;
+    const nextLevel =
+      direction === 'down' ? currentLevel + 1 : currentLevel - 1;
 
     this.scene.restart({ level: nextLevel });
   }

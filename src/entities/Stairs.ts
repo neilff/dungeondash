@@ -32,6 +32,8 @@ export default class Stairs {
   }
 
   activate(): void {
-    this.eventEmitter.emit(eventTypes.GOTO_NEXT_LEVEL);
+    this.eventEmitter.emit(eventTypes.CHANGE_LEVEL, {
+      direction: this.direction,
+    });
   }
 }
