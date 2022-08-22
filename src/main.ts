@@ -21,4 +21,4 @@ const game = new Phaser.Game({
   },
 });
 
-game.registry.set('devMode', true);
+game.registry.set('devMode', false);

@@ -182,19 +182,38 @@ export default class Map {
       return acc;
     }, []);
 
+    this.slimes = [];
+
+    const randomRoom =
+      dungeon!.rooms[Math.floor(Math.random() * dungeon!.rooms.length)];
+    const randomRoomTL = this.tilemap.tileToWorldXY(
+      randomRoom.x + 1,
+      randomRoom.y + 1
+    );
+    const randomRoomBounds = this.tilemap.tileToWorldXY(
+      randomRoom.x + randomRoom.width - 1,
+      randomRoom.y + randomRoom.height - 1
+    );
+
     this.stairs = [
-      // TODO (neilff): This is a temporary workaround to render stairs for
-      // development purposes.
-      new Stairs('down', this.startingX + 48, this.startingY + 128, scene),
+      new Stairs(
+        'down',
+        Phaser.Math.Between(randomRoomTL.x, randomRoomBounds.x),
+        Phaser.Math.Between(randomRoomTL.y, randomRoomBounds.y),
+        scene
+      ),
     ];
 
     if (this.currentLevel > 1) {
       this.stairs.push(
-        new Stairs('up', this.startingX + 48, this.startingY + 64, scene)
+        new Stairs(
+          'up',
+          Phaser.Math.Between(randomRoomTL.x, randomRoomBounds.x),
+          Phaser.Math.Between(randomRoomTL.y, randomRoomBounds.y),
+          scene
+        )
       );
     }
-
-    this.slimes = [];
 
     for (let room of dungeon!.rooms) {
       this.groundLayer.randomize(
