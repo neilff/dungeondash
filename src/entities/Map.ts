@@ -204,17 +204,6 @@ export default class Map {
       ),
     ];
 
-    if (this.currentLevel > 1) {
-      this.stairs.push(
-        new Stairs(
-          'up',
-          Phaser.Math.Between(randomRoomTL.x, randomRoomBounds.x),
-          Phaser.Math.Between(randomRoomTL.y, randomRoomBounds.y),
-          scene
-        )
-      );
-    }
-
     for (let room of dungeon!.rooms) {
       this.groundLayer.randomize(
         room.x - 1,

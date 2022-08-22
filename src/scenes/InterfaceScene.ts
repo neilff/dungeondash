@@ -8,11 +8,14 @@ export default class InterfaceScene extends Phaser.Scene {
   blackScreen?: Phaser.GameObjects.Rectangle;
   lastUpdate?: number;
   isLevelScreenVisible: boolean;
+  enableDebugMode: boolean;
 
   constructor() {
     super({ key: 'InterfaceScene' });
 
     this.isLevelScreenVisible = false;
+
+    this.enableDebugMode = false;
   }
 
   preload(): void {
@@ -38,7 +41,11 @@ export default class InterfaceScene extends Phaser.Scene {
     this.text.setAlpha(1);
     this.lastUpdate = 0;
 
-    this.showLevelIndicator();
+    this.enableDebugMode = this.registry.get('devMode');
+
+    if (!this.enableDebugMode) {
+      this.showLevelIndicator();
+    }
   }
 
   private hideLevelIndicator(): void {
