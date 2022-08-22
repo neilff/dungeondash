@@ -10,7 +10,7 @@ const game = new Phaser.Game({
   width: window.innerWidth,
   height: window.innerHeight,
   render: { pixelArt: true },
-  physics: { default: 'arcade', arcade: { debug: true, gravity: { y: 0 } } },
+  physics: { default: 'arcade', arcade: { debug: false, gravity: { y: 0 } } },
   scene: [PreloaderScene, GameScene, ReferenceScene, InterfaceScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
@@ -21,4 +21,4 @@ const game = new Phaser.Game({
   },
 });
 
-game.registry.set('devMode', true);
+game.registry.set('devMode', false);

@@ -99,6 +99,8 @@ export default class Map {
 
     this.currentLevel = currentLevel;
 
+    this.powerups = [];
+
     this.rooms = dungeon!.rooms;
 
     this.width = width;
@@ -167,20 +169,20 @@ export default class Map {
         Graphics.environment.indices.floor.outerCorridor
       );
 
-    // TODO (neilff): This is a temporary workaround to render all powerups
-    // in the development environment. Add a proper solution for this.
-    const powerUpsArray = chunk(Object.keys(Graphics.items.indices), 5);
+    if (options.enableDebugMode) {
+      const powerUpsArray = chunk(Object.keys(Graphics.items.indices), 5);
 
-    this.powerups = powerUpsArray.reduce((acc, row, rowIndex) => {
-      row.forEach((powerupType, colIndex) => {
-        const xValue = this.startingX + 100 + colIndex * 20;
-        const yValue = this.startingY + 100 + rowIndex * 20;
+      this.powerups = powerUpsArray.reduce((acc, row, rowIndex) => {
+        row.forEach((powerupType, colIndex) => {
+          const xValue = this.startingX + 100 + colIndex * 20;
+          const yValue = this.startingY + 100 + rowIndex * 20;
 
-        acc.push(new Powerup(powerupType, xValue, yValue, scene));
-      });
+          acc.push(new Powerup(powerupType, xValue, yValue, scene));
+        });
 
-      return acc;
-    }, []);
+        return acc;
+      }, []);
+    }
 
     this.slimes = [];
 
