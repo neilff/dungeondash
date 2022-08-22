@@ -301,8 +301,6 @@ export default class Player {
   }
 
   update(time: number) {
-    const blocked = this.body.blocked;
-
     this.time = time;
 
     const keys = this.keys;
@@ -355,40 +353,40 @@ export default class Player {
 
     // Setup the animation for the user based on the direction they are facing
     switch (true) {
-      case !blocked.right && direction === 'east':
+      case direction === 'east':
         this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
-      case !blocked.right && direction === 'south-east':
+      case direction === 'south-east':
         this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
-      case !blocked.down && direction === 'south':
+      case direction === 'south':
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
-      case !blocked.down && direction === 'south-west':
+      case direction === 'south-west':
         this.sprite.setFlipX(true);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slashDown.key;
         break;
-      case !blocked.left && direction === 'west':
+      case direction === 'west':
         this.sprite.setFlipX(true);
         moveAnim = isMoving ? Animations.walk.key : Animations.idle.key;
         attackAnim = Animations.slash.key;
         break;
-      case !blocked.left && direction === 'north-west':
+      case direction === 'north-west':
         this.sprite.setFlipX(true);
         moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
         attackAnim = Animations.slashUp.key;
         break;
-      case !blocked.up && direction === 'north':
+      case direction === 'north':
         moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
         attackAnim = Animations.slashUp.key;
         break;
-      case !blocked.up && direction === 'north-east':
+      case direction === 'north-east':
         this.sprite.setFlipX(false);
         moveAnim = isMoving ? Animations.walkBack.key : Animations.idleBack.key;
         attackAnim = Animations.slashUp.key;
